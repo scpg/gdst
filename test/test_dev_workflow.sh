@@ -1,12 +1,19 @@
 #!/bin/bash
 
-# GDST - Quick test script for dev_workflow_setup.sh
+# GDST - Quick test script for gdst.sh
 # This tests the script in dry-run mode without GitHub integration
 set -e
 
 SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
-source "${SCRIPT_DIR}/const_and_fctn.sh"
+# If SCRIPT_DIR ends with /test, use parent directory
+if [[ "$SCRIPT_DIR" == */test ]]; then
+    SCRIPT_DIR="$(dirname "$SCRIPT_DIR")"
+fi
+
+
+source "${SCRIPT_DIR}/constants.sh"
 source "${SCRIPT_DIR}/logging_lib.sh"
+
 
 # Enable terminal logging for testing
 enable_terminal_logging
@@ -21,10 +28,11 @@ cleanup() {
 }
 trap cleanup EXIT
 
-log_info "Starting GDST dev_workflow_setup.sh test suite"
+log_info "Starting GDST gdst.sh test suite"
 
 # Create test directory
-TEST_DIR="/tmp/dev_workflow_test_$(date +%s)"
+TEST_DIR_Template="/tmp/%s.%s.dev_workflow_test"
+TEST_DIR=$(printf "$TEST_DIR_Template" "$SCRIPT_FIX_NAME" "$(date +%Y-%m-%d_%H-%M-%S)")
 log_info "Creating test directory: $TEST_DIR"
 mkdir -p "$TEST_DIR"
 cd "$TEST_DIR"
@@ -57,7 +65,7 @@ chmod +x gh
 
 # Test the script with sample input
 log_info "Testing with Node.js project..."
-echo -e "test-project\ntestuser\nnode\npublic\ny" | timeout 60 bash "$SCRIPT_DIR/dev_workflow_setup.sh"
+echo -e "test-project\ntestuser\nnode\npublic\ny" | timeout 60 bash "$SCRIPT_DIR/gdst.sh"
 
 # Check if key files were created
 echo ""

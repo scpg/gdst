@@ -105,7 +105,7 @@ chore/update-dependencies
 ### 🎛️ Integration Points
 
 #### Automatic Setup:
-- All features are automatically installed when running `dev_workflow_setup.sh`
+- All features are automatically installed when running `gdst.sh`
 - Git hooks are configured automatically
 - Documentation is generated automatically
 - Scripts are made executable automatically

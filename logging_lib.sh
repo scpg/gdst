@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
-source "${SCRIPT_DIR}/const_and_fctn.sh"
+source "${SCRIPT_DIR}/constants.sh"
 
 # Advanced Bash Logging Library
 # Usage: source this file in your script, then use log_info, log_warn, etc.

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
 SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
-source "${SCRIPT_DIR}/const_and_fctn.sh"
+source "${SCRIPT_DIR}/constants.sh"
 
 # Demo script to show the enhanced completion message
-# This demonstrates what users will see at the end of dev_workflow_setup.sh
+# This demonstrates what users will see at the end of gdst.sh
 
 REPO_NAME="my-test-project"
 GITHUB_USERNAME="myusername"

@@ -2,13 +2,13 @@
 
 ## 🚀 **Enhanced Features Added**
 
-The `dev_workflow_setup.sh` script now supports both **interactive** and **command-line** modes with extensive options.
+The `gdst.sh` script now supports both **interactive** and **command-line** modes with extensive options.
 
 ## 📋 **Usage Modes**
 
 ### **Interactive Mode (Default)**
 ```bash
-./dev_workflow_setup.sh
+./gdst.sh
 ```
 - Prompts for all required information
 - Shows configuration before proceeding
@@ -16,7 +16,7 @@ The `dev_workflow_setup.sh` script now supports both **interactive** and **comma
 
 ### **Non-Interactive Mode**
 ```bash
-./dev_workflow_setup.sh --name my-project --username myuser --non-interactive
+./gdst.sh --name my-project --username myuser --non-interactive
 ```
 - All parameters provided via command line
 - No user prompts
@@ -50,27 +50,27 @@ The `dev_workflow_setup.sh` script now supports both **interactive** and **comma
 
 ### **Quick Setup (Non-Interactive)**
 ```bash
-./dev_workflow_setup.sh -n my-app -u myuser --non-interactive
+./gdst.sh -n my-app -u myuser --non-interactive
 ```
 
 ### **Private Python Project**
 ```bash
-./dev_workflow_setup.sh -n python-api -u myuser -t python -v private --non-interactive
+./gdst.sh -n python-api -u myuser -t python -v private --non-interactive
 ```
 
 ### **Dry Run to Preview**
 ```bash
-./dev_workflow_setup.sh -n test-project -u myuser --dry-run --non-interactive
+./gdst.sh -n test-project -u myuser --dry-run --non-interactive
 ```
 
 ### **Fast Setup (Skip Heavy Operations)**
 ```bash
-./dev_workflow_setup.sh -n quick-setup -u myuser --skip-install --skip-protection --non-interactive
+./gdst.sh -n quick-setup -u myuser --skip-install --skip-protection --non-interactive
 ```
 
 ### **Custom Directory**
 ```bash
-./dev_workflow_setup.sh -n project-name -u myuser -d /workspace/projects --non-interactive
+./gdst.sh -n project-name -u myuser -d /workspace/projects --non-interactive
 ```
 
 ## ⚡ **Speed Options**
@@ -115,4 +115,4 @@ The script validates all inputs and provides clear error messages:
 
 ## 📖 **Full Help**
 
-Run `./dev_workflow_setup.sh --help` for complete documentation and examples.
+Run `./gdst.sh --help` for complete documentation and examples.

@@ -4,23 +4,23 @@ This directory contains a comprehensive development workflow setup script that a
 
 ## Contents
 
-- `dev_workflow_setup.sh` - Main setup script
+- `gdst.sh` - Main setup script
 - `template_utils.sh` - Template processing utilities
 - `templates/` - Directory containing all template files
-- `dev_workflow_setup_guide.md` - Detailed setup guide
+- `docs/dev_workflow_setup_guide.md` - Detailed setup guide
 - `test_dev_workflow.sh` - Test script
 
 ## Quick Start
 
 ```bash
 # Interactive mode (recommended for first use)
-./dev_workflow_setup.sh
+./gdst.sh
 
 # Non-interactive mode
-./dev_workflow_setup.sh --name my-project --username myuser --type node --non-interactive
+./gdst.sh --name my-project --username myuser --type node --non-interactive
 
 # Dry run to see what would be created
-./dev_workflow_setup.sh --name test-project --username testuser --dry-run --non-interactive
+./gdst.sh --name test-project --username testuser --dry-run --non-interactive
 ```
 
 ## Features
@@ -59,19 +59,19 @@ This directory contains a comprehensive development workflow setup script that a
 
 ```bash
 # Create a Node.js project
-./dev_workflow_setup.sh -n my-node-app -u myusername -t node --non-interactive
+./gdst.sh -n my-node-app -u myusername -t node --non-interactive
 
 # Create a Python project with private visibility
-./dev_workflow_setup.sh -n my-python-app -u myusername -t python -v private --non-interactive
+./gdst.sh -n my-python-app -u myusername -t python -v private --non-interactive
 
 # Skip package installation for faster setup
-./dev_workflow_setup.sh -n my-project -u myusername --skip-install --non-interactive
+./gdst.sh -n my-project -u myusername --skip-install --non-interactive
 
 # Skip branch protection setup
-./dev_workflow_setup.sh -n my-project -u myusername --skip-protection --non-interactive
+./gdst.sh -n my-project -u myusername --skip-protection --non-interactive
 ```
 
-For more detailed information, see `dev_workflow_setup_guide.md`.
+For more detailed information, see `docs/dev_workflow_setup_guide.md`.
 
 ## Branch Naming Conventions
 
@@ -115,7 +115,7 @@ Modern GitHub rulesets provide enterprise-grade branch protection:
 
 ```bash
 # Automatic setup during project creation
-./dev_workflow_setup.sh -n my-project -u myuser --non-interactive
+./gdst.sh -n my-project -u myuser --non-interactive
 
 # Manual ruleset management
 ./scripts/setup-github-rulesets.sh setup myuser myproject  # Create rulesets

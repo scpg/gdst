@@ -84,7 +84,7 @@ v1.0.0-beta.1   # Pre-release
 ### **Automatic Setup**
 ```bash
 # New projects get enhanced rulesets automatically
-./dev_workflow_setup.sh -n my-project -u myuser -t node
+./gdst.sh -n my-project -u myuser -t node
 ```
 
 ### **Manual Ruleset Management**

@@ -17,7 +17,7 @@ GDST now includes **complete GitHub repository rulesets functionality** in addit
 - **Development Branch Rules** - Organizes `test/**`, `chore/**`, `docs/**` branches
 
 ### 3. **Integration with Main Setup**
-- Automatically included in `dev_workflow_setup.sh`
+- Automatically included in `gdst.sh`
 - Created during project setup process
 - Falls back gracefully if permissions are insufficient
 
@@ -37,7 +37,7 @@ ID       NAME                      SOURCE                STATUS  RULES
 
 ### During Project Setup (Automatic)
 ```bash
-./dev_workflow_setup.sh -n my-project -u myuser --non-interactive
+./gdst.sh -n my-project -u myuser --non-interactive
 # Rulesets are created automatically
 ```
 

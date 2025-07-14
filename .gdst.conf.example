@@ -1,0 +1,21 @@
+# GDST Configuration File Example
+# Copy this file to .gdst.conf and customize as needed
+
+# Project defaults
+REPO_NAME=""
+GITHUB_USERNAME=""
+PROJECT_TYPE="node"
+REPO_VISIBILITY="public"
+WORKING_DIR="$(pwd)"
+
+# Tool behavior
+SKIP_INSTALL=false
+SKIP_PROTECTION=false
+DRY_RUN=false
+VERBOSE_MODE=false
+LOG_LEVEL="INFO"
+
+# Advanced settings
+AUTO_PUSH=true
+CREATE_INITIAL_COMMIT=true
+SETUP_HOOKS=true
