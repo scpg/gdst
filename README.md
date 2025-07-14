@@ -1,26 +1,41 @@
 # GDST - GitHub Development Setup Tool
 
-This directory contains a comprehensive development workflow setup script that automates the creation of GitHub repositories with proper branching strategies, CI/CD pipelines, and development tools.
+🚀 **Automates the creation of GitHub repositories with proper branching strategies, CI/CD pipelines, and development tools.**
 
-## Contents
+## ⚠️ IMPORTANT - Two Different Use Cases
 
-- `gdst.sh` - Main setup script
-- `template_utils.sh` - Template processing utilities
-- `templates/` - Directory containing all template files
-- `docs/dev_workflow_setup_guide.md` - Detailed setup guide
-- `test_dev_workflow.sh` - Test script
+### 👤 **For END USERS** (Creating new projects)
+If you want to **create a new project repository**, you use GDST directly:
 
-## Quick Start
+```bash
+# Create a new Node.js project
+./gdst.sh -n my-awesome-project -u myusername -t node
+
+# Create a Python project with private visibility
+./gdst.sh -n my-python-app -u myusername -t python -V private
+
+# See all options
+./gdst.sh --help
+```
+
+**DO NOT use the Makefile** - it's not for end users!
+
+### 👨‍💻 **For DEVELOPERS** (Working on GDST itself)
+If you want to **contribute to or test the GDST tool**, see the [Contributing](#contributing) section.
+
+---
+
+## Quick Start for End Users
 
 ```bash
 # Interactive mode (recommended for first use)
 ./gdst.sh
 
 # Non-interactive mode
-./gdst.sh --name my-project --username myuser --type node --non-interactive
+./gdst.sh --name my-project --username myuser --type node
 
 # Dry run to see what would be created
-./gdst.sh --name test-project --username testuser --dry-run --non-interactive
+./gdst.sh --name test-project --username testuser --dry-run
 ```
 
 ## Features
@@ -191,3 +206,80 @@ This project (GDST) was inspired by and builds upon excellent resources from the
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+### 👨‍💻 **For GDST Developers Only**
+
+If you want to contribute to the GDST tool itself, you'll use the Makefile for development tasks:
+
+#### Development Setup
+```bash
+# Clone the repository
+git clone https://github.com/your-org/gdst.git
+cd gdst
+
+# Set up development environment
+make setup
+
+# Install development dependencies
+make install-deps
+```
+
+#### Testing Your Changes
+```bash
+# Run all tests
+make test
+
+# Run specific test suites
+make test-basic          # Basic functionality tests
+make test-advanced       # Advanced features tests
+make test-configuration  # Configuration tests
+make test-security       # Security tests
+
+# Quick validation
+make validate
+
+# Run performance tests
+make test-performance
+```
+
+#### Code Quality
+```bash
+# Run linting
+make lint
+
+# Generate coverage report
+make coverage
+
+# Clean up test artifacts
+make clean
+```
+
+#### CI/CD Testing
+```bash
+# Run CI test suite
+make test-ci
+
+# Run tests in Docker
+make test-docker
+```
+
+### ⚠️ **Important Note**
+The Makefile is **ONLY for developers working on the GDST tool itself**. End users who want to create projects should use `./gdst.sh` directly, not the Makefile.
+
+### Development Workflow
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes to `gdst.sh` or related files
+4. Run `make test` to ensure everything works
+5. Run `make lint` to check code quality
+6. Submit a pull request
+
+### Adding New Features
+- Add tests for new functionality in the appropriate test suite
+- Update documentation in README.md
+- Follow the existing code style and patterns
+- Ensure all tests pass before submitting
+
+For detailed testing information, see [test/README.md](test/README.md).

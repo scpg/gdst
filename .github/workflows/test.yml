@@ -1,0 +1,93 @@
+name: GDST Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y git curl bc xmlstarlet
+        
+    - name: Make scripts executable
+      run: chmod +x gdst.sh test/*.sh
+      
+    - name: Run test suite
+      run: ./test/ci_test.sh
+      
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results
+        path: /tmp/gdst-ci-results/
+        
+    - name: Publish test results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      if: always()
+      with:
+        files: /tmp/gdst-ci-results/junit/*.xml
+        
+    - name: Comment PR with results
+      uses: actions/github-script@v6
+      if: github.event_name == 'pull_request'
+      with:
+        script: |
+          const fs = require('fs');
+          try {
+            const summary = fs.readFileSync('/tmp/gdst-ci-results/summary.txt', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## GDST Test Results\n\n```\n' + summary + '\n```'
+            });
+          } catch (error) {
+            console.log('Could not read test summary:', error);
+          }
+          
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Run security tests
+      run: |
+        chmod +x test/*.sh
+        ./test/run_tests.sh security
+        
+    - name: Run shellcheck
+      run: |
+        sudo apt-get install -y shellcheck
+        shellcheck gdst.sh
+        find . -name "*.sh" -path "./test/*" -exec shellcheck {} \;
+        
+  performance-test:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Run performance tests
+      run: |
+        chmod +x test/*.sh
+        ./test/run_tests.sh --performance
+        
+    - name: Run stress tests
+      run: |
+        ./test/run_tests.sh --stress

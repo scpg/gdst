@@ -103,6 +103,15 @@ print_debug() {
     log_message "DEBUG" "$1"
 }
 
+print_header() {
+    echo -e "${BLUE}=== $1 ===${NC}"
+}
+
+# Function to check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
 # Function to show help
 show_help() {
     cat << EOF
