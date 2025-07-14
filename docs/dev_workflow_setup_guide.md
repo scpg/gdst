@@ -2,25 +2,23 @@
 
 ## 🚀 **Enhanced Features Added**
 
-The `gdst.sh` script now supports both **interactive** and **command-line** modes with extensive options.
+The `gdst.sh` script provides comprehensive command-line options for automated development workflow setup.
 
-## 📋 **Usage Modes**
+## 📋 **Usage**
 
-### **Interactive Mode (Default)**
+### **Command-Line Mode**
 ```bash
-./gdst.sh
-```
-- Prompts for all required information
-- Shows configuration before proceeding
-- Default behavior (backward compatible)
-
-### **Non-Interactive Mode**
-```bash
-./gdst.sh --name my-project --username myuser --non-interactive
+./gdst.sh --name my-project --username myuser
 ```
 - All parameters provided via command line
 - No user prompts
 - Perfect for automation and CI/CD
+
+### **Help and Information**
+```bash
+./gdst.sh --help     # Show all options
+./gdst.sh --version  # Show version information
+```
 
 ## 🛠️ **Command Line Options**
 
@@ -29,12 +27,13 @@ The `gdst.sh` script now supports both **interactive** and **command-line** mode
 | `--name` | `-n` | Repository name | `-n my-awesome-app` |
 | `--username` | `-u` | GitHub username | `-u johndoe` |
 | `--type` | `-t` | Project type | `-t python` |
-| `--visibility` | `-v` | Repo visibility | `-v private` |
+| `--visibility` | `-V` | Repo visibility | `-V private` |
 | `--directory` | `-d` | Working directory | `-d /path/to/projects` |
 | `--skip-install` | | Skip package installation | `--skip-install` |
 | `--skip-protection` | | Skip branch protection | `--skip-protection` |
 | `--dry-run` | | Show what would be done | `--dry-run` |
-| `--non-interactive` | | Non-interactive mode | `--non-interactive` |
+| `--verbose` | `-v` | Enable verbose output | `--verbose` |
+| `--level` | `-l` | Set log level | `--level DEBUG` |
 | `--help` | `-h` | Show help | `--help` |
 | `--version` | | Show version | `--version` |
 
@@ -48,29 +47,29 @@ The `gdst.sh` script now supports both **interactive** and **command-line** mode
 
 ## 📝 **Common Usage Examples**
 
-### **Quick Setup (Non-Interactive)**
+### **Quick Setup**
 ```bash
-./gdst.sh -n my-app -u myuser --non-interactive
+./gdst.sh -n my-app -u myuser
 ```
 
 ### **Private Python Project**
 ```bash
-./gdst.sh -n python-api -u myuser -t python -v private --non-interactive
+./gdst.sh -n python-api -u myuser -t python -V private
 ```
 
 ### **Dry Run to Preview**
 ```bash
-./gdst.sh -n test-project -u myuser --dry-run --non-interactive
+./gdst.sh -n test-project -u myuser --dry-run
 ```
 
 ### **Fast Setup (Skip Heavy Operations)**
 ```bash
-./gdst.sh -n quick-setup -u myuser --skip-install --skip-protection --non-interactive
+./gdst.sh -n quick-setup -u myuser --skip-install --skip-protection
 ```
 
 ### **Custom Directory**
 ```bash
-./gdst.sh -n project-name -u myuser -d /workspace/projects --non-interactive
+./gdst.sh -n project-name -u myuser -d /workspace/projects
 ```
 
 ## ⚡ **Speed Options**

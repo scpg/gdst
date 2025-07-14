@@ -37,7 +37,7 @@ ID       NAME                      SOURCE                STATUS  RULES
 
 ### During Project Setup (Automatic)
 ```bash
-./gdst.sh -n my-project -u myuser --non-interactive
+./gdst.sh -n my-project -u myuser
 # Rulesets are created automatically
 ```
 

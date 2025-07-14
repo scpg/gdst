@@ -28,14 +28,14 @@ If you want to **contribute to or test the GDST tool**, see the [Contributing](#
 ## Quick Start for End Users
 
 ```bash
-# Interactive mode (recommended for first use)
-./gdst.sh
-
-# Non-interactive mode
+# Create a new project
 ./gdst.sh --name my-project --username myuser --type node
 
 # Dry run to see what would be created
 ./gdst.sh --name test-project --username testuser --dry-run
+
+# See all available options
+./gdst.sh --help
 ```
 
 ## Features
@@ -74,16 +74,16 @@ If you want to **contribute to or test the GDST tool**, see the [Contributing](#
 
 ```bash
 # Create a Node.js project
-./gdst.sh -n my-node-app -u myusername -t node --non-interactive
+./gdst.sh -n my-node-app -u myusername -t node
 
 # Create a Python project with private visibility
-./gdst.sh -n my-python-app -u myusername -t python -v private --non-interactive
+./gdst.sh -n my-python-app -u myusername -t python -V private
 
 # Skip package installation for faster setup
-./gdst.sh -n my-project -u myusername --skip-install --non-interactive
+./gdst.sh -n my-project -u myusername --skip-install
 
 # Skip branch protection setup
-./gdst.sh -n my-project -u myusername --skip-protection --non-interactive
+./gdst.sh -n my-project -u myusername --skip-protection
 ```
 
 For more detailed information, see `docs/dev_workflow_setup_guide.md`.
@@ -130,7 +130,7 @@ Modern GitHub rulesets provide enterprise-grade branch protection:
 
 ```bash
 # Automatic setup during project creation
-./gdst.sh -n my-project -u myuser --non-interactive
+./gdst.sh -n my-project -u myuser
 
 # Manual ruleset management
 ./scripts/setup-github-rulesets.sh setup myuser myproject  # Create rulesets
