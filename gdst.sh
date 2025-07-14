@@ -80,7 +80,7 @@ log_message() {
             ;;
         DEBUG)
             if [[ "$LOG_LEVEL" == "DEBUG" ]]; then
-                echo -e "${BLUE}[DEBUG]${NC} $message"
+                echo -e "${BLUE}[DEBUG]${NC} $message" >&2
             fi
             ;;
     esac
@@ -88,19 +88,19 @@ log_message() {
 
 # Update existing print functions to use structured logging
 print_status() {
-    log_message "INFO" "$1"
+    log_message_safely "INFO" "$1"
 }
 
 print_warning() {
-    log_message "WARN" "$1"
+    log_message_safely "WARN" "$1"
 }
 
 print_error() {
-    log_message "ERROR" "$1"
+    log_message_safely "ERROR" "$1"
 }
 
 print_debug() {
-    log_message "DEBUG" "$1"
+    log_message_safely "DEBUG" "$1"
 }
 
 print_header() {
@@ -112,239 +112,282 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
-# Function to show help
-show_help() {
-    cat << EOF
-GDST - GitHub Development Setup Tool
-
-USAGE:
-    $0 [OPTIONS]
-
-DESCRIPTION:
-    Sets up a complete development environment with branching strategy, GitHub configuration,
-    and automated branch naming validation following industry best practices.
-
-OPTIONS:
-    -n, --name REPO_NAME        Repository name (required)
-    -u, --username USERNAME     GitHub username (required)
-    -t, --type TYPE             Project type: node, python, java, react, other (default: node)
-    -V, --visibility VISIBILITY Repository visibility: public, private (default: public)
-    -d, --directory DIR         Working directory to create project in (default: current directory)
-    -v, --verbose               Enable verbose output (sets log level to DEBUG)
-    -l, --level LEVEL           Set log level: INFO, WARN, ERROR, DEBUG (default: INFO)
+# Security validation functions
+sanitize_input() {
+    local input="$1"
+    local allow_special="${2:-false}"
     
-    --skip-install              Skip npm/pip package installation
-    --skip-protection           Skip GitHub branch protection setup
-    --dry-run                   Show what would be done without executing
+    if [ -z "$input" ]; then
+        return 1
+    fi
     
-    -h, --help                  Show this help message
-    --version                   Show version information
-
-EXAMPLES:
-    # Basic usage with required parameters
-    $0 --name my-project --username myuser
+    # Remove dangerous characters if not allowing special characters
+    if [ "$allow_special" = "false" ]; then
+        # Remove shell metacharacters, command substitution, and path traversal attempts
+        input=$(echo "$input" | sed -e 's/\]/\_/g' -e 's/[;&|`$(){}\\\*?<>[]/_/g' | sed 's|\.\./||g')
+        # Remove any remaining quotes or backticks
+        input=$(echo "$input" | tr -d '`"'"'")
+    fi
     
-    # Create a private Python project
-    $0 -n my-python-app -u myuser -t python -V private
+    # Validate length (reasonable limits)
+    if [ ${#input} -gt 100 ]; then
+        return 1
+    fi
     
-    # Create project in a specific directory
-    $0 -n my-project -u myuser -d /path/to/projects
+    # Ensure result is not empty after sanitization
+    if [ -z "$input" ]; then
+        return 1
+    fi
     
-    # Dry run to see what would be created
-    $0 -n test-project -u testuser --dry-run
-    
-    # Skip package installation for faster setup
-    $0 -n my-project -u myuser --skip-install
-    
-    # Run with verbose output and custom log level
-    $0 -n my-project -u myuser --verbose
-
-SUPPORTED PROJECT TYPES:
-    node        Node.js project with package.json, Jest, ESLint, Prettier
-    react       React project (same as node but with React-specific setup)
-    python      Python project with requirements.txt, pytest, black, flake8
-    java        Java project with Maven pom.xml
-    other       Generic project with basic structure
-
-PREREQUISITES:
-    • Git installed and configured
-    • GitHub CLI (gh) installed and authenticated
-    • Internet connection for GitHub operations
-    • Node.js (for node/react projects)
-    • Python 3 (for python projects)
-    • Java/Maven (for java projects)
-
-NOTES:
-    • Repository name and GitHub username are required parameters
-    • GitHub CLI must be authenticated with 'gh auth login' before running
-    • The script will create a new directory with the repository name
-    • Branch protection requires admin access to the repository
-    • Use --dry-run to preview changes without making them
-
-EOF
+    echo "$input"
+    return 0
 }
 
-# Function to show version
-show_version() {
-    echo "GDST - GitHub Development Setup Tool v1.0.0"
-    echo "Copyright (c) 2025"
+# Function to validate repository name
+validate_repo_name() {
+    local repo_name="$1"
+    
+    # Check if empty
+    if [ -z "$repo_name" ]; then
+        print_error "Repository name cannot be empty"
+        return 1
+    fi
+    
+    # Check length
+    if [ ${#repo_name} -gt 100 ]; then
+        print_error "Repository name too long (max 100 characters)"
+        return 1
+    fi
+    
+    # Check for valid characters (GitHub naming rules)
+    if ! [[ "$repo_name" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+        print_error "Repository name contains invalid characters. Use only letters, numbers, dots, hyphens, and underscores"
+        return 1
+    fi
+    
+    # Check for dangerous patterns
+    if [[ "$repo_name" =~ \.\./|^\.|\.$|^-|--$ ]]; then
+        print_error "Repository name contains dangerous patterns"
+        return 1
+    fi
+    
+    return 0
 }
 
-# Function to parse command line arguments
-parse_arguments() {
-    print_debug "Parsing command line arguments: $*"
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            -n|--name)
-                REPO_NAME="$2"
-                shift 2
-                ;;
-            -u|--username)
-                GITHUB_USERNAME="$2"
-                shift 2
-                ;;
-            -t|--type)
-                PROJECT_TYPE="$2"
-                shift 2
-                ;;
-            -V|--visibility)
-                REPO_VISIBILITY="$2"
-                shift 2
-                ;;
-            -d|--directory)
-                WORKING_DIR="$2"
-                shift 2
-                ;;
-            -v|--verbose)
-                VERBOSE_MODE=true
-                LOG_LEVEL="DEBUG"
-                shift
-                ;;
-            -l|--level)
-                LOG_LEVEL="$2"
-                shift 2
-                ;;
-            --skip-install)
-                SKIP_INSTALL=true
-                shift
-                ;;
-            --skip-protection)
-                SKIP_PROTECTION=true
-                shift
-                ;;
-            --dry-run)
-                DRY_RUN=true
-                shift
-                ;;
-            -h|--help)
-                show_help
-                exit 0
-                ;;
-            --version)
-                show_version
-                exit 0
-                ;;
-            *)
-                print_error "Unknown option: $1"
-                echo "Use --help for usage information"
-                exit 1
-                ;;
-        esac
-    done
+# Function to validate GitHub username
+validate_github_username() {
+    local username="$1"
+    
+    # Check if empty
+    if [ -z "$username" ]; then
+        print_error "GitHub username cannot be empty"
+        return 1
+    fi
+    
+    # Check length
+    if [ ${#username} -gt 39 ]; then
+        print_error "GitHub username too long (max 39 characters)"
+        return 1
+    fi
+    
+    # Check for valid characters (GitHub username rules)
+    if ! [[ "$username" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$ ]]; then
+        print_error "GitHub username contains invalid characters or format"
+        return 1
+    fi
+    
+    # Check for dangerous patterns
+    if [[ "$username" =~ \.\./|^\.|\.$|^-|--$ ]]; then
+        print_error "GitHub username contains dangerous patterns"
+        return 1
+    fi
+    
+    return 0
 }
 
-# Function to validate arguments
-validate_arguments() {
-    # Repository name and username are always required
-    if [ -z "$REPO_NAME" ]; then
-        print_error "Repository name is required. Use -n or --name"
-        echo "Run '$0 --help' for usage information"
-        exit 1
+# Function to sanitize file paths
+sanitize_path() {
+    local path="$1"
+    local allow_relative="${2:-false}"
+    
+    if [ -z "$path" ]; then
+        return 1
     fi
     
-    if [ -z "$GITHUB_USERNAME" ]; then
-        print_error "GitHub username is required. Use -u or --username"
-        echo "Run '$0 --help' for usage information"
-        exit 1
+    # Remove path traversal attempts using proper sed escaping
+    path=$(echo "$path" | sed 's|\.\./||g' | sed 's|/\.\./|/|g')
+    
+    # Remove multiple consecutive slashes
+    path=$(echo "$path" | sed 's|/\+|/|g')
+    
+    # Remove dangerous characters using character class
+    path=$(echo "$path" | sed 's|[;&|`$(){}[\]\\*?<>]|_|g')
+    
+    # If not allowing relative paths, ensure it doesn't start with ../
+    if [ "$allow_relative" = "false" ]; then
+        if [[ "$path" =~ ^\.\./|/\.\./|^\.\.$ ]]; then
+            return 1
+        fi
     fi
     
-    # Validate project type
-    if [[ ! "$PROJECT_TYPE" =~ ^(node|python|java|react|other)$ ]]; then
-        print_error "Invalid project type: $PROJECT_TYPE. Supported: node, python, java, react, other"
-        exit 1
-    fi
-    
-    # Validate repository visibility
-    if [[ ! "$REPO_VISIBILITY" =~ ^(public|private)$ ]]; then
-        print_error "Invalid repository visibility: $REPO_VISIBILITY. Supported: public, private"
-        exit 1
-    fi
-    
-    # Validate log level
-    if [[ ! "$LOG_LEVEL" =~ ^(INFO|WARN|ERROR|DEBUG)$ ]]; then
-        print_error "Invalid log level: $LOG_LEVEL. Supported: INFO, WARN, ERROR, DEBUG"
-        exit 1
-    fi
-    
-    # Validate working directory
-    validate_directory "$WORKING_DIR" "working directory" || exit 1
+    echo "$path"
+    return 0
 }
 
-# Function to show configuration
-show_configuration() {
-    print_debug "Current configuration: Repository=$REPO_NAME, Username=$GITHUB_USERNAME, Type=$PROJECT_TYPE"
+# Function to validate and sanitize working directory
+validate_working_directory() {
+    local dir_path="$1"
     
-    echo -e "\n${GREEN}Configuration:${NC}"
-    echo "Repository: $REPO_NAME"
-    echo "GitHub Username: $GITHUB_USERNAME"
-    echo "Project Type: $PROJECT_TYPE"
-    echo "Repository Visibility: $REPO_VISIBILITY"
-    echo "Working Directory: $WORKING_DIR"
-    if [ "$VERBOSE_MODE" = true ]; then
-        echo "Verbose Mode: Yes"
+    # If empty or just current directory, use pwd
+    if [ -z "$dir_path" ] || [ "$dir_path" = "." ]; then
+        dir_path="$(pwd)"
     fi
-    if [ "$LOG_LEVEL" != "INFO" ]; then
-        echo "Log Level: $LOG_LEVEL"
+    
+    # Sanitize the path
+    local sanitized_path
+    sanitized_path=$(sanitize_path "$dir_path" true)
+    
+    if [ $? -ne 0 ] || [ -z "$sanitized_path" ]; then
+        print_error "Invalid working directory path"
+        return 1
     fi
-    if [ "$SKIP_INSTALL" = true ]; then
-        echo "Skip Package Install: Yes"
+    
+    # Convert to absolute path, handling different cases
+    local abs_path
+    if [[ "$sanitized_path" == /* ]]; then
+        # Already absolute
+        abs_path="$sanitized_path"
+    elif [ "$sanitized_path" = "." ]; then
+        # Current directory
+        abs_path="$(pwd)"
+    else
+        # Make relative path absolute
+        abs_path="$(pwd)/$sanitized_path"
     fi
-    if [ "$SKIP_PROTECTION" = true ]; then
-        echo "Skip Branch Protection: Yes"
+    
+    # Validate the resolved path
+    if ! validate_directory "$abs_path" "working directory"; then
+        return 1
     fi
-    if [ "$DRY_RUN" = true ]; then
-        echo "Dry Run Mode: Yes"
-    fi
-    echo ""
+    
+    echo "$abs_path"
+    return 0
 }
 
-# Function to execute or simulate commands based on dry-run mode
-execute_command() {
+# Function to escape shell arguments safely
+escape_shell_arg() {
+    local arg="$1"
+    
+    # Use printf %q to safely escape shell arguments
+    printf '%q' "$arg"
+}
+
+# Function to execute commands with input validation
+execute_command_with_validation() {
     local description="$1"
-    shift
+    local continue_on_error="${2:-false}"
+    shift 2
     
-    if [ "$DRY_RUN" = true ]; then
-        echo -e "${YELLOW}[DRY RUN]${NC} $description"
-        echo -e "${YELLOW}[DRY RUN]${NC} Would execute: $*"
+    print_debug "Executing with validation: $*"
+    
+    # Validate all arguments
+    local validated_args=()
+    for arg in "$@"; do
+        local escaped_arg
+        escaped_arg=$(escape_shell_arg "$arg")
+        validated_args+=("$escaped_arg")
+    done
+    
+    # Execute the command with validated arguments
+    if eval "${validated_args[@]}" 2>/dev/null; then
+        print_status "$description ✓"
         return 0
     else
-        print_status "$description"
-        "$@"
+        if [ "$continue_on_error" = "true" ]; then
+            print_warning "$description failed, continuing..."
+            return 0
+        else
+            print_error "$description failed"
+            return 1
+        fi
     fi
 }
 
-# Function to create file or simulate in dry-run mode
-create_file_safe() {
-    local file_path="$1"
-    local description="$2"
+# Function to safely process templates with input validation
+process_template_safely() {
+    local template_file="$1"
+    local destination_file="$2"
+    local repo_name="$3"
+    local github_username="$4"
     
-    if [ "$DRY_RUN" = true ]; then
-        echo -e "${YELLOW}[DRY RUN]${NC} Would create file: $file_path"
-        echo -e "${YELLOW}[DRY RUN]${NC} $description"
-        return 0
+    # Validate inputs
+    local safe_template_file
+    safe_template_file=$(sanitize_path "$template_file")
+    if [ $? -ne 0 ]; then
+        print_error "Invalid template file path"
+        return 1
     fi
     
-    return 1  # Let the calling function handle actual file creation
+    local safe_destination_file
+    safe_destination_file=$(sanitize_path "$destination_file")
+    if [ $? -ne 0 ]; then
+        print_error "Invalid destination file path"
+        return 1
+    fi
+    
+    local safe_repo_name
+    safe_repo_name=$(sanitize_input "$repo_name")
+    if [ $? -ne 0 ]; then
+        print_error "Invalid repository name for template processing"
+        return 1
+    fi
+    
+    local safe_github_username
+    safe_github_username=$(sanitize_input "$github_username")
+    if [ $? -ne 0 ]; then
+        print_error "Invalid GitHub username for template processing"
+        return 1
+    fi
+    
+    # Process template with validated inputs
+    if copy_template "$safe_template_file" "$safe_destination_file" "$safe_repo_name" "$safe_github_username"; then
+        return 0
+    else
+        print_error "Template processing failed"
+        return 1
+    fi
+}
+
+# Function to log messages safely (prevent log injection)
+log_message_safely() {
+    local level="$1"
+    local message="$2"
+    
+    # Sanitize log message to prevent injection
+    local safe_message
+    safe_message=$(echo "$message" | sed 's/[;&|`$(){}[\]\\]/\\&/g' | tr -d '\n\r')
+    
+    # Limit message length
+    if [ ${#safe_message} -gt 500 ]; then
+        safe_message="${safe_message:0:500}..."
+    fi
+    
+    # Call original log function with sanitized message
+    log_message "$level" "$safe_message"
+}
+
+# Function to handle errors safely without exposing sensitive information
+handle_error_safely() {
+    local error_context="$1"
+    local sensitive_info="${2:-false}"
+    
+    if [ "$sensitive_info" = "true" ]; then
+        # Don't expose sensitive information in error messages
+        print_error "$error_context failed - check logs for details"
+        log_message_safely "ERROR" "$error_context failed with sensitive information"
+    else
+        print_error "$error_context failed"
+    fi
 }
 
 # Function to safely copy templates with error handling
@@ -357,7 +400,8 @@ copy_template_safe() {
     
     print_debug "Copying template: $template_file -> $destination_file"
     
-    if copy_template "$template_file" "$destination_file" "$repo_name" "$github_username"; then
+    # Use secure template processing
+    if process_template_safely "$template_file" "$destination_file" "$repo_name" "$github_username"; then
         print_status "Created $description"
         return 0
     else
@@ -373,11 +417,19 @@ create_directory_safe() {
     
     print_debug "Creating directory: $dir_path"
     
-    if mkdir -p "$dir_path" 2>/dev/null; then
-        print_status "Created $description: $dir_path"
+    # Sanitize directory path
+    local safe_dir_path
+    safe_dir_path=$(sanitize_path "$dir_path")
+    if [ $? -ne 0 ]; then
+        print_error "Invalid directory path: $dir_path"
+        return 1
+    fi
+    
+    if mkdir -p "$safe_dir_path" 2>/dev/null; then
+        print_status "Created $description: $safe_dir_path"
         return 0
     else
-        print_error "Failed to create $description: $dir_path"
+        print_error "Failed to create $description: $safe_dir_path"
         return 1
     fi
 }
@@ -390,58 +442,12 @@ execute_command_safe() {
     
     print_debug "Executing: $*"
     
-    if "$@" 2>/dev/null; then
-        print_status "$description ✓"
+    # Use secure command execution
+    if execute_command_with_validation "$description" "$continue_on_error" "$@"; then
         return 0
     else
-        if [ "$continue_on_error" = "true" ]; then
-            print_warning "$description failed, continuing..."
-            return 0
-        else
-            print_error "$description failed"
-            return 1
-        fi
+        return 1
     fi
-}
-
-# Rollback tracking
-ROLLBACK_ACTIONS=()
-
-# Function to add rollback action
-add_rollback_action() {
-    local action="$1"
-    ROLLBACK_ACTIONS+=("$action")
-    print_debug "Added rollback action: $action"
-}
-
-# Function to execute rollback
-execute_rollback() {
-    if [ ${#ROLLBACK_ACTIONS[@]} -eq 0 ]; then
-        print_debug "No rollback actions to execute"
-        return 0
-    fi
-    
-    print_warning "Executing rollback actions..."
-    
-    # Execute rollback actions in reverse order
-    for ((i=${#ROLLBACK_ACTIONS[@]}-1; i>=0; i--)); do
-        local action="${ROLLBACK_ACTIONS[i]}"
-        print_debug "Executing rollback: $action"
-        
-        if eval "$action" 2>/dev/null; then
-            print_status "Rollback action completed: $action"
-        else
-            print_warning "Rollback action failed: $action"
-        fi
-    done
-    
-    # Clear rollback actions
-    ROLLBACK_ACTIONS=()
-}
-
-# Function to setup cleanup trap
-setup_cleanup_trap() {
-    trap 'execute_rollback; restore_original_directory' ERR EXIT
 }
 
 # Working directory management functions
@@ -1491,11 +1497,18 @@ perform_preflight_checks() {
     
     # Check GitHub API rate limit
     if command_exists gh; then
-        local rate_limit=$(gh api rate_limit 2>/dev/null | grep -o '"remaining":[0-9]*' | cut -d: -f2 || echo "0")
-        if [ "$rate_limit" -lt 10 ]; then
-            print_warning "GitHub API rate limit is low: $rate_limit requests remaining"
+        local rate_limit
+        rate_limit=$(gh api rate_limit 2>/dev/null | grep -o '"remaining":[0-9]*' | cut -d: -f2 2>/dev/null)
+        
+        # Ensure rate_limit is a valid integer
+        if [[ "$rate_limit" =~ ^[0-9]+$ ]]; then
+            if [ "$rate_limit" -lt 10 ]; then
+                print_warning "GitHub API rate limit is low: $rate_limit requests remaining"
+            else
+                print_status "GitHub API rate limit check passed ($rate_limit requests remaining)"
+            fi
         else
-            print_status "GitHub API rate limit check passed ($rate_limit requests remaining)"
+            print_warning "Could not determine GitHub API rate limit"
         fi
     fi
     
@@ -1575,6 +1588,222 @@ show_spinner() {
     done
     
     printf "\r${GREEN}✓${NC} %s\n" "$message"
+}
+
+# Function to show version
+show_version() {
+    echo "GDST - GitHub Development Setup Tool v1.0.0"
+    echo "Copyright (c) 2025"
+}
+
+# Function to show help
+show_help() {
+    echo "GDST - GitHub Development Setup Tool"
+    echo "Usage: $0 [OPTIONS]"
+    echo ""
+    echo "Required arguments:"
+    echo "  -n, --name NAME          Repository name"
+    echo "  -u, --username USERNAME  GitHub username"
+    echo ""
+    echo "Optional arguments:"
+    echo "  -t, --type TYPE          Project type (node, python, java, react, other) [default: node]"
+    echo "  -V, --visibility VIS     Repository visibility (public, private) [default: public]"
+    echo "  -d, --directory DIR      Working directory [default: current directory]"
+    echo "  -v, --verbose            Enable verbose output"
+    echo "  -l, --level LEVEL        Log level (INFO, WARN, ERROR, DEBUG) [default: INFO]"
+    echo "  --skip-install           Skip package installation"
+    echo "  --skip-protection        Skip branch protection setup"
+    echo "  --dry-run                Show what would be done without making changes"
+    echo "  -h, --help               Show this help message"
+    echo "  --version                Show version information"
+    echo ""
+    echo "Examples:"
+    echo "  $0 -n my-project -u myusername"
+    echo "  $0 -n my-app -u myusername -t python -V private"
+    echo "  $0 -n test-project -u myusername --dry-run"
+    echo "  $0 -n my-project -u myusername --verbose"
+    echo ""
+    echo "This script sets up a complete development workflow with:"
+    echo "  • Local development environment"
+    echo "  • GitHub repository with branch protection"
+    echo "  • CI/CD pipelines with branch validation"
+    echo "  • Automated branch naming validation (Git hooks)"
+    echo "  • Enhanced development tools and scripts"
+    echo "  • Branch naming conventions documentation"
+}
+
+# Function to parse command line arguments
+parse_arguments() {
+    print_debug "Parsing command line arguments: $*"
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -n|--name)
+                REPO_NAME="$2"
+                shift 2
+                ;;
+            -u|--username)
+                GITHUB_USERNAME="$2"
+                shift 2
+                ;;
+            -t|--type)
+                PROJECT_TYPE="$2"
+                shift 2
+                ;;
+            -V|--visibility)
+                REPO_VISIBILITY="$2"
+                shift 2
+                ;;
+            -d|--directory)
+                WORKING_DIR="$2"
+                shift 2
+                ;;
+            -v|--verbose)
+                VERBOSE_MODE=true
+                LOG_LEVEL="DEBUG"
+                shift
+                ;;
+            -l|--level)
+                LOG_LEVEL="$2"
+                shift 2
+                ;;
+            --skip-install)
+                SKIP_INSTALL=true
+                shift
+                ;;
+            --skip-protection)
+                SKIP_PROTECTION=true
+                shift
+                ;;
+            --dry-run)
+                DRY_RUN=true
+                shift
+                ;;
+            -h|--help)
+                show_help
+                exit 0
+                ;;
+            --version)
+                show_version
+                exit 0
+                ;;
+            *)
+                print_error "Unknown option: $1"
+                echo "Use --help for usage information"
+                exit 1
+                ;;
+        esac
+    done
+}
+
+# Function to validate arguments
+validate_arguments() {
+    # Repository name and username are always required
+    if [ -z "$REPO_NAME" ]; then
+        print_error "Repository name is required. Use -n or --name"
+        echo "Run '$0 --help' for usage information"
+        exit 1
+    fi
+    
+    if [ -z "$GITHUB_USERNAME" ]; then
+        print_error "GitHub username is required. Use -u or --username"
+        echo "Run '$0 --help' for usage information"
+        exit 1
+    fi
+    
+    # Validate repository name with security checks
+    if ! validate_repo_name "$REPO_NAME"; then
+        # In dry run mode, sanitize the name instead of failing
+        if [ "$DRY_RUN" = true ]; then
+            print_warning "Repository name contains invalid characters, sanitizing..."
+            local sanitized_name
+            sanitized_name=$(sanitize_input "$REPO_NAME")
+            if [ $? -eq 0 ] && [ -n "$sanitized_name" ]; then
+                REPO_NAME="$sanitized_name"
+                print_warning "Using sanitized name: $REPO_NAME"
+            else
+                REPO_NAME="sanitized-project"
+                print_warning "Using fallback name: $REPO_NAME"
+            fi
+        else
+            exit 1
+        fi
+    fi
+    
+    # Validate GitHub username with security checks
+    if ! validate_github_username "$GITHUB_USERNAME"; then
+        # In dry run mode, sanitize the username instead of failing
+        if [ "$DRY_RUN" = true ]; then
+            print_warning "GitHub username contains invalid characters, sanitizing..."
+            GITHUB_USERNAME=$(sanitize_input "$GITHUB_USERNAME")
+            if [ $? -ne 0 ] || [ -z "$GITHUB_USERNAME" ]; then
+                GITHUB_USERNAME="sanitized-user"
+                print_warning "Using sanitized username: $GITHUB_USERNAME"
+            fi
+        else
+            exit 1
+        fi
+    fi
+    
+    # Validate project type
+    if [[ ! "$PROJECT_TYPE" =~ ^(node|python|java|react|other)$ ]]; then
+        print_error "Invalid project type: $PROJECT_TYPE. Supported: node, python, java, react, other"
+        exit 1
+    fi
+    
+    # Validate repository visibility
+    if [[ ! "$REPO_VISIBILITY" =~ ^(public|private)$ ]]; then
+        print_error "Invalid repository visibility: $REPO_VISIBILITY. Supported: public, private"
+        exit 1
+    fi
+    
+    # Validate log level
+    if [[ ! "$LOG_LEVEL" =~ ^(INFO|WARN|ERROR|DEBUG)$ ]]; then
+        print_error "Invalid log level: $LOG_LEVEL. Supported: INFO, WARN, ERROR, DEBUG"
+        exit 1
+    fi
+    
+    # Validate and sanitize working directory
+    local validated_working_dir
+    validated_working_dir=$(validate_working_directory "$WORKING_DIR")
+    if [ $? -ne 0 ]; then
+        # In dry run mode, use current directory as fallback
+        if [ "$DRY_RUN" = true ]; then
+            print_warning "Working directory invalid, using current directory"
+            WORKING_DIR="$(pwd)"
+        else
+            exit 1
+        fi
+    else
+        WORKING_DIR="$validated_working_dir"
+    fi
+}
+
+# Function to show configuration
+show_configuration() {
+    print_debug "Current configuration: Repository=$REPO_NAME, Username=$GITHUB_USERNAME, Type=$PROJECT_TYPE"
+    
+    echo -e "\n${GREEN}Configuration:${NC}"
+    echo "Repository: $REPO_NAME"
+    echo "GitHub Username: $GITHUB_USERNAME"
+    echo "Project Type: $PROJECT_TYPE"
+    echo "Repository Visibility: $REPO_VISIBILITY"
+    echo "Working Directory: $WORKING_DIR"
+    if [ "$VERBOSE_MODE" = true ]; then
+        echo "Verbose Mode: Yes"
+    fi
+    if [ "$LOG_LEVEL" != "INFO" ]; then
+        echo "Log Level: $LOG_LEVEL"
+    fi
+    if [ "$SKIP_INSTALL" = true ]; then
+        echo "Skip Package Install: Yes"
+    fi
+    if [ "$SKIP_PROTECTION" = true ]; then
+        echo "Skip Branch Protection: Yes"
+    fi
+    if [ "$DRY_RUN" = true ]; then
+        echo "Dry Run Mode: Yes"
+    fi
+    echo ""
 }
 
 # Main execution function

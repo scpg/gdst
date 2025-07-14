@@ -189,4 +189,11 @@ run_security_tests() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     init_test_framework
     run_security_tests
+    
+    # Exit with appropriate code
+    if [[ $TESTS_FAILED -gt 0 ]]; then
+        exit 1
+    else
+        exit 0
+    fi
 fi

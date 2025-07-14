@@ -215,3 +215,10 @@ elif [[ "$INTEGRATION_TESTS" == true ]]; then
 elif [[ "$ALL_TESTS" == true ]]; then
     run_all_tests
 fi
+
+# Exit with appropriate code
+if [[ $TESTS_FAILED -gt 0 ]]; then
+    exit 1
+else
+    exit 0
+fi

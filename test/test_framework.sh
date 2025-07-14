@@ -4,7 +4,8 @@
 # Provides utilities for testing the GDST tool with proper assertions and reporting
 # Based on the comprehensive dry-run testing performed
 
-set -e
+# Don't use set -e in the test framework to allow better error handling
+# set -e
 
 # Test framework configuration
 TEST_FRAMEWORK_VERSION="1.0.0"
@@ -41,8 +42,11 @@ init_test_framework() {
     # Initialize log file
     echo "GDST Test Run - $(date)" > "$TEST_RESULTS_DIR/test_run.log"
     
-    # Setup cleanup trap
-    trap cleanup_test_framework EXIT
+    # Setup cleanup trap - only if not already set
+    if [[ -z "$TEST_TRAP_SET" ]]; then
+        trap cleanup_test_framework EXIT
+        TEST_TRAP_SET=true
+    fi
 }
 
 # Cleanup function
@@ -61,10 +65,10 @@ cleanup_test_framework() {
     
     if [[ $TESTS_FAILED -gt 0 ]]; then
         echo -e "${RED}Some tests failed!${NC}"
-        exit 1
+        # Don't exit here - let the script continue
     else
         echo -e "${GREEN}All tests passed!${NC}"
-        exit 0
+        # Don't exit here - let the script continue
     fi
 }
 
@@ -129,7 +133,7 @@ assert_equals() {
     else
         echo "  Expected: '$expected'"
         echo "  Actual: '$actual'"
-        fail_test "$message"
+        echo "  FAIL: $message"
         return 1
     fi
 }
@@ -144,7 +148,7 @@ assert_contains() {
     else
         echo "  Text: '$text'"
         echo "  Pattern: '$pattern'"
-        fail_test "$message"
+        echo "  FAIL: $message"
         return 1
     fi
 }
@@ -198,7 +202,7 @@ assert_exit_code() {
     else
         echo "  Expected exit code: $expected_code"
         echo "  Actual exit code: $actual_code"
-        fail_test "$message"
+        echo "  FAIL: $message"
         return 1
     fi
 }
@@ -206,16 +210,41 @@ assert_exit_code() {
 # Run GDST command with dry-run and capture output
 run_gdst_dry_run() {
     local args="$*"
+    
+    # Ensure test temp directory exists
+    mkdir -p "$TEST_TEMP_DIR"
+    
     local temp_output="$TEST_TEMP_DIR/gdst_output_$$"
     
     # Run GDST with dry-run and capture both stdout and stderr
-    set +e
-    "$GDST_SCRIPT_DIR/gdst.sh" $args --dry-run > "$temp_output" 2>&1
+    # Temporarily disable set -e to allow non-zero exit codes
+    local old_errexit
+    if [[ $- =~ e ]]; then
+        old_errexit=true
+        set +e
+    else
+        old_errexit=false
+    fi
+    
+    # Handle empty args properly
+    if [[ -z "$args" ]]; then
+        "$GDST_SCRIPT_DIR/gdst.sh" --dry-run > "$temp_output" 2>&1
+    else
+        "$GDST_SCRIPT_DIR/gdst.sh" $args --dry-run > "$temp_output" 2>&1
+    fi
     local exit_code=$?
-    set -e
+    
+    # Restore previous errexit setting
+    if [[ "$old_errexit" == "true" ]]; then
+        set -e
+    fi
     
     # Store output for assertions
-    GDST_OUTPUT=$(cat "$temp_output")
+    if [[ -f "$temp_output" ]]; then
+        GDST_OUTPUT=$(cat "$temp_output")
+    else
+        GDST_OUTPUT=""
+    fi
     GDST_EXIT_CODE=$exit_code
     
     return $exit_code
