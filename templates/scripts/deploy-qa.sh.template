@@ -1,0 +1,7 @@
+#!/bin/bash
+echo "Deploying to QA..."
+git checkout qa/staging
+git pull origin qa/staging
+git merge dev/main
+git push origin qa/staging
+echo "Deployed to QA environment"

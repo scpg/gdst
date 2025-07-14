@@ -1,0 +1,236 @@
+# GitHub Repository Ruleset Configuration
+
+This template provides GitHub repository rulesets that can be applied to enforce branch naming conventions and protection rules at the organization or repository level.
+
+## Repository Ruleset (JSON)
+
+Save this as a `.github/rulesets/branch-protection.json` file or use it via GitHub's API:
+
+```json
+{
+  "name": "Branch Protection and Naming Rules",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": ["refs/heads/**"],
+      "exclude": ["refs/heads/main", "refs/heads/master"]
+    }
+  },
+  "rules": [
+    {
+      "type": "creation",
+      "parameters": {
+        "restrict_creation_via_api": false
+      }
+    },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "required_status_checks": [
+          {
+            "context": "validate-branch",
+            "integration_id": null
+          },
+          {
+            "context": "test",
+            "integration_id": null
+          }
+        ],
+        "strict_required_status_checks_policy": true
+      }
+    },
+    {
+      "type": "pull_request",
+      "parameters": {
+        "required_approving_review_count": 1,
+        "dismiss_stale_reviews_on_push": true,
+        "require_code_owner_review": false,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": true
+      }
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_id": 1,
+      "actor_type": "RepositoryRole",
+      "bypass_mode": "always"
+    }
+  ]
+}
+```
+
+## Branch Name Pattern Enforcement
+
+### Using GitHub Actions (Recommended)
+
+The CI/CD template already includes branch name validation. For additional enforcement, add this to your workflow:
+
+```yaml
+name: Branch Name Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  validate-branch-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate branch name
+        run: |
+          branch_name="${{ github.head_ref }}"
+          
+          # Define valid patterns
+          if [[ ! "$branch_name" =~ ^(feature|bugfix|hotfix|test|chore|docs|dev|qa|release)/.+ ]]; then
+            echo "❌ Invalid branch name: $branch_name"
+            echo "Branch must follow pattern: category/description"
+            echo "Valid categories: feature, bugfix, hotfix, test, chore, docs, dev, qa, release"
+            exit 1
+          fi
+          
+          # Check description length
+          description="${branch_name#*/}"
+          if [[ ${#description} -lt 3 ]] || [[ ${#description} -gt 50 ]]; then
+            echo "❌ Branch description must be 3-50 characters: $description"
+            exit 1
+          fi
+          
+          # Check for numbers only
+          if [[ "$description" =~ ^[0-9]+$ ]]; then
+            echo "❌ Branch description cannot be numbers only: $description"
+            exit 1
+          fi
+          
+          echo "✅ Branch name is valid: $branch_name"
+```
+
+### Using GitHub CLI to Create Rulesets
+
+```bash
+# Create a ruleset for branch protection
+gh api repos/{owner}/{repo}/rulesets \
+  --method POST \
+  --field name="Branch Protection Rules" \
+  --field target="branch" \
+  --field enforcement="active" \
+  --field conditions='{"ref_name":{"include":["refs/heads/**"]}}' \
+  --field rules='[{"type":"pull_request","parameters":{"required_approving_review_count":1}}]'
+```
+
+## Protected Branch Rules
+
+### Main Branch Protection
+
+```bash
+# Protect main branch
+gh api repos/{owner}/{repo}/branches/main/protection \
+  --method PUT \
+  --field required_status_checks='{"strict":true,"contexts":["validate-branch","test"]}' \
+  --field enforce_admins=true \
+  --field required_pull_request_reviews='{"required_approving_review_count":2,"dismiss_stale_reviews":true}' \
+  --field restrictions=null \
+  --field allow_force_pushes=false \
+  --field allow_deletions=false
+```
+
+### Development Branch Protection
+
+```bash
+# Protect dev/main branch
+gh api repos/{owner}/{repo}/branches/dev/main/protection \
+  --method PUT \
+  --field required_status_checks='{"strict":true,"contexts":["validate-branch","test"]}' \
+  --field enforce_admins=true \
+  --field required_pull_request_reviews='{"required_approving_review_count":1,"dismiss_stale_reviews":true}' \
+  --field restrictions=null \
+  --field allow_force_pushes=false \
+  --field allow_deletions=false
+```
+
+## Organization-Level Rulesets
+
+For organization-wide enforcement, create rulesets at the organization level:
+
+```json
+{
+  "name": "Organization Branch Naming Standards",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": ["refs/heads/**"],
+      "exclude": ["refs/heads/main", "refs/heads/master", "refs/heads/dev/main"]
+    },
+    "repository_name": {
+      "include": ["**"],
+      "exclude": ["legacy-*"]
+    }
+  },
+  "rules": [
+    {
+      "type": "creation",
+      "parameters": {
+        "restrict_creation_via_api": false
+      }
+    }
+  ]
+}
+```
+
+## Implementation Steps
+
+1. **Repository Level**: Use the setup script to automatically configure branch protection
+2. **Organization Level**: Apply rulesets to enforce naming across all repositories
+3. **Team Training**: Use the documentation templates to train team members
+4. **Gradual Rollout**: Start with warnings, then enforce rules
+
+## Monitoring and Compliance
+
+### Check Ruleset Compliance
+
+```bash
+# List all rulesets
+gh api repos/{owner}/{repo}/rulesets
+
+# Get specific ruleset
+gh api repos/{owner}/{repo}/rulesets/{ruleset_id}
+
+# Check rule evaluation for a branch
+gh api repos/{owner}/{repo}/rules/branches/{branch}/evaluate
+```
+
+### Branch Naming Analytics
+
+```bash
+# Get all branches and check naming compliance
+gh api repos/{owner}/{repo}/branches --paginate | \
+  jq -r '.[].name' | \
+  while read branch; do
+    if [[ ! "$branch" =~ ^(main|master|dev/main|qa/staging|feature/|bugfix/|hotfix/|test/|chore/|docs/|dev/|qa/|release/) ]]; then
+      echo "Non-compliant branch: $branch"
+    fi
+  done
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Existing Non-Compliant Branches**: Use migration scripts to rename or document exceptions
+2. **Legacy Projects**: Create exemption rules for older repositories
+3. **External Contributors**: Provide clear documentation and helpful error messages
+
+### Override Procedures
+
+For emergency situations, document override procedures:
+
+```bash
+# Temporary bypass (requires admin permissions)
+gh api repos/{owner}/{repo}/rulesets/{ruleset_id} \
+  --method PATCH \
+  --field enforcement="disabled"
+```
+
+Remember to re-enable rules after emergency fixes are completed.

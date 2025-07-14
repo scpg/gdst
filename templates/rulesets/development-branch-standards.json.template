@@ -1,0 +1,44 @@
+{
+  "name": "Development Branch Standards",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": ["refs/heads/test/**", "refs/heads/chore/**", "refs/heads/docs/**"],
+      "exclude": []
+    }
+  },
+  "rules": [
+    {
+      "type": "commit_message_pattern",
+      "parameters": {
+        "name": "Development Branch Commits",
+        "negate": false,
+        "pattern": "^(test|chore|docs)(\\(.+\\))?: .{1,50}",
+        "operator": "regex"
+      }
+    },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "required_status_checks": [
+          {
+            "context": "branch-name-validation",
+            "integration_id": null
+          }
+        ],
+        "strict_required_status_checks_policy": false
+      }
+    },
+    {
+      "type": "update"
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_id": 1,
+      "actor_type": "OrganizationAdmin",
+      "bypass_mode": "always"
+    }
+  ]
+}

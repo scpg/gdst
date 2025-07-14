@@ -1,0 +1,44 @@
+{
+  "name": "Feature Branch Standards",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": ["refs/heads/feature/**", "refs/heads/bugfix/**", "refs/heads/hotfix/**"],
+      "exclude": []
+    }
+  },
+  "rules": [
+    {
+      "type": "commit_message_pattern",
+      "parameters": {
+        "name": "Feature Branch Commits",
+        "negate": false,
+        "pattern": "^(feat|fix|hotfix|docs|style|refactor|test|chore)(\\(.+\\))?: .{1,50}",
+        "operator": "regex"
+      }
+    },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "required_status_checks": [
+          {
+            "context": "branch-name-validation",
+            "integration_id": null
+          }
+        ],
+        "strict_required_status_checks_policy": false
+      }
+    },
+    {
+      "type": "update"
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_id": 1,
+      "actor_type": "OrganizationAdmin",
+      "bypass_mode": "always"
+    }
+  ]
+}

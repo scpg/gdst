@@ -1,0 +1,18 @@
+# Deployment Guide
+
+## Environments
+- **Development**: Automatic deployment from dev/main
+- **QA**: Manual deployment from qa/staging
+- **Production**: Manual deployment from main
+
+## Process
+1. Development → QA: Merge dev/main to qa/staging
+2. QA → Production: Merge qa/staging to main
+
+## Rollback
+If issues occur in production:
+1. Identify last working commit
+2. Create hotfix branch from main
+3. Apply fix
+4. Deploy directly to main
+5. Backport to qa/staging and dev/main

@@ -1,0 +1,57 @@
+# {{REPO_NAME}}
+
+## Description
+Brief description of your project
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+ (for Node.js projects)
+- Git
+- Your specific requirements here
+
+### Installation
+```bash
+# Clone the repository
+git clone https://github.com/{{GITHUB_USERNAME}}/{{REPO_NAME}}.git
+cd {{REPO_NAME}}
+
+# Install dependencies
+npm install
+
+# Copy environment file
+cp .env.example .env
+
+# Start development server
+npm run dev
+```
+
+## Development Workflow
+
+### Branch Structure
+- `main` - Production code
+- `qa/staging` - QA environment
+- `dev/main` - Development main branch
+- `dev/feature-name` - Feature branches
+
+### Making Changes
+1. Create feature branch from `dev/main`
+2. Make your changes
+3. Create PR to `dev/main`
+4. After review, merge to `dev/main`
+5. Deploy to QA via `qa/staging`
+6. Deploy to production via `main`
+
+## Scripts
+- `npm start` - Start production server
+- `npm run dev` - Start development server
+- `npm test` - Run tests
+- `npm run lint` - Run linter
+- `npm run format` - Format code
+
+## Contributing
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request

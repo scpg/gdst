@@ -1,0 +1,193 @@
+# Branch Naming Conventions
+
+This document outlines the branch naming conventions used in this project to ensure consistency, clarity, and efficient collaboration.
+
+## Overview
+
+We follow a structured branch naming convention based on industry best practices to:
+- Improve code organization and tracking
+- Enable automated CI/CD processes
+- Facilitate team collaboration
+- Maintain a clean Git history
+
+## Branch Structure
+
+### Protected Branches
+
+- **`main`** - Production-ready code
+- **`dev/main`** - Main development branch
+- **`qa/staging`** - QA and staging environment
+
+### Feature Branches
+
+All development work should be done on feature branches that follow this naming pattern:
+
+```
+<category>/<description>
+<category>/<issue-number>-<description>
+```
+
+## Categories
+
+| Category | Purpose | Example |
+|----------|---------|---------|
+| `feature/` | New features or enhancements | `feature/user-authentication` |
+| `bugfix/` | Bug fixes | `bugfix/login-error-fix` |
+| `hotfix/` | Critical production fixes | `hotfix/security-vulnerability` |
+| `test/` | Experimental features or testing | `test/new-ui-component` |
+| `chore/` | Maintenance tasks, refactoring | `chore/update-dependencies` |
+| `docs/` | Documentation updates | `docs/api-documentation` |
+| `release/` | Release preparation | `release/1.2.0` |
+
+## Naming Rules
+
+### ✅ DO:
+- Use lowercase letters only
+- Separate words with hyphens (`-`)
+- Be descriptive but concise (3-50 characters for description)
+- Include issue numbers when applicable: `feature/123-user-login`
+- Use clear, meaningful descriptions
+
+### ❌ DON'T:
+- Use spaces or special characters (except hyphens)
+- Use uppercase letters
+- Create branches with numbers only
+- Make descriptions too long (over 50 characters)
+- Use underscores or other separators
+
+## Examples
+
+### Good Branch Names ✅
+```bash
+feature/user-registration
+bugfix/404-page-styling
+hotfix/critical-memory-leak
+feature/123-shopping-cart
+chore/eslint-configuration
+docs/setup-instructions
+test/new-payment-gateway
+```
+
+### Bad Branch Names ❌
+```bash
+Feature/UserRegistration    # Wrong case
+fix_login_bug              # Wrong separator
+feature/123                # Numbers only
+new-awesome-super-long-feature-that-does-everything  # Too long
+feature/user registration  # Spaces not allowed
+hotfix/URGENT-FIX         # Uppercase not allowed
+```
+
+## Workflow
+
+### 1. Creating a New Branch
+
+Use the provided script for consistent branch creation:
+
+```bash
+# Interactive mode (recommended)
+./scripts/new-feature.sh --interactive
+
+# Direct mode
+./scripts/new-feature.sh feature user-authentication
+./scripts/new-feature.sh bugfix login-error-fix 123
+```
+
+### 2. Branch Validation
+
+The project includes automatic validation:
+- **Pre-commit hook**: Validates branch name before commits
+- **Pre-push hook**: Validates branch name before pushing
+- **CI/CD pipeline**: Validates branch names in pull requests
+
+### 3. Pull Request Process
+
+1. Create your feature branch from `dev/main`
+2. Make your changes and commit
+3. Push your branch: `git push -u origin <branch-name>`
+4. Create a pull request to `dev/main`
+5. Branch name validation will run automatically
+
+## Validation
+
+### Manual Validation
+
+Check if a branch name is valid:
+
+```bash
+./scripts/validate-branch-name.sh feature/user-authentication
+./scripts/validate-branch-name.sh --help  # Show guidelines
+```
+
+### Automatic Validation
+
+The project automatically validates branch names:
+- Before commits (pre-commit hook)
+- Before pushes (pre-push hook)
+- In CI/CD pipeline (GitHub Actions)
+
+## Branch Lifecycle
+
+### Feature Development
+```
+dev/main → feature/new-feature → dev/main (via PR)
+```
+
+### Bug Fixes
+```
+dev/main → bugfix/fix-description → dev/main (via PR)
+```
+
+### Hotfixes
+```
+main → hotfix/critical-fix → main (via PR)
+                          → dev/main (via PR)
+```
+
+### Releases
+```
+dev/main → release/version-number → main (via PR)
+                                 → dev/main (merge back)
+```
+
+## Troubleshooting
+
+### Renaming an Invalid Branch
+
+If you created a branch with an invalid name:
+
+```bash
+# Rename your current branch
+git branch -m old-branch-name new-valid-branch-name
+
+# Or create a new branch and delete the old one
+git checkout -b new-valid-branch-name
+git branch -D old-branch-name
+```
+
+### Bypassing Validation (Not Recommended)
+
+If you absolutely need to bypass validation:
+
+```bash
+# Skip pre-commit hooks
+git commit --no-verify
+
+# Skip pre-push hooks
+git push --no-verify
+```
+
+**Note**: Bypassing validation is strongly discouraged as it breaks team conventions.
+
+## Additional Resources
+
+- [Git Best Practices](https://www.atlassian.com/git/tutorials/comparing-workflows)
+- [Branch Naming Best Practices](https://tilburgsciencehub.com/topics/automation/version-control/advanced-git/naming-git-branches/)
+- [GitHub Flow](https://guides.github.com/introduction/flow/)
+
+## Questions?
+
+If you have questions about branch naming conventions, please:
+1. Check this documentation first
+2. Run `./scripts/validate-branch-name.sh --help`
+3. Ask your team lead or create an issue

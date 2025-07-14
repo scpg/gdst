@@ -1,0 +1,144 @@
+#!/bin/bash
+
+# Branch Name Validation Script
+# Validates branch names against established naming conventions
+# Based on best practices from Tilburg Science Hub
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Valid branch prefixes (categories)
+VALID_PREFIXES=(
+    "feature"
+    "bugfix"
+    "hotfix"
+    "test"
+    "chore"
+    "docs"
+    "dev"
+    "qa"
+    "release"
+)
+
+# Protected branches that don't need validation
+PROTECTED_BRANCHES=(
+    "main"
+    "master"
+    "dev/main"
+    "qa/staging"
+)
+
+# Function to check if branch name is valid
+validate_branch_name() {
+    local branch_name="$1"
+    
+    # Check if it's a protected branch
+    for protected in "${PROTECTED_BRANCHES[@]}"; do
+        if [[ "$branch_name" == "$protected" ]]; then
+            return 0
+        fi
+    done
+    
+    # Check if branch name follows the pattern: category/description or category/issue-description
+    if [[ ! "$branch_name" =~ ^[a-z]+/[a-z0-9-]+$ ]]; then
+        echo -e "${RED}❌ Invalid branch name format: $branch_name${NC}"
+        echo -e "${YELLOW}Expected format: category/description or category/123-description${NC}"
+        echo -e "${YELLOW}Use lowercase letters, numbers, and hyphens only${NC}"
+        return 1
+    fi
+    
+    # Extract prefix
+    local prefix="${branch_name%%/*}"
+    
+    # Check if prefix is valid
+    local valid_prefix=false
+    for valid in "${VALID_PREFIXES[@]}"; do
+        if [[ "$prefix" == "$valid" ]]; then
+            valid_prefix=true
+            break
+        fi
+    done
+    
+    if [[ "$valid_prefix" == false ]]; then
+        echo -e "${RED}❌ Invalid branch prefix: $prefix${NC}"
+        echo -e "${YELLOW}Valid prefixes are: ${VALID_PREFIXES[*]}${NC}"
+        return 1
+    fi
+    
+    # Check description part
+    local description="${branch_name#*/}"
+    
+    # Description should not be too short or too long
+    if [[ ${#description} -lt 3 ]]; then
+        echo -e "${RED}❌ Branch description too short: $description${NC}"
+        echo -e "${YELLOW}Description should be at least 3 characters${NC}"
+        return 1
+    fi
+    
+    if [[ ${#description} -gt 50 ]]; then
+        echo -e "${RED}❌ Branch description too long: $description${NC}"
+        echo -e "${YELLOW}Description should be 50 characters or less${NC}"
+        return 1
+    fi
+    
+    # Check for numbers only (not allowed)
+    if [[ "$description" =~ ^[0-9]+$ ]]; then
+        echo -e "${RED}❌ Branch description cannot be numbers only: $description${NC}"
+        echo -e "${YELLOW}Include descriptive keywords with issue numbers${NC}"
+        return 1
+    fi
+    
+    echo -e "${GREEN}✅ Valid branch name: $branch_name${NC}"
+    return 0
+}
+
+# Function to show branch naming help
+show_naming_help() {
+    echo -e "${GREEN}Branch Naming Convention Guidelines:${NC}"
+    echo ""
+    echo -e "${YELLOW}Format:${NC} category/description"
+    echo -e "${YELLOW}Example:${NC} feature/user-authentication"
+    echo -e "${YELLOW}With Issue:${NC} bugfix/123-login-error-fix"
+    echo ""
+    echo -e "${YELLOW}Valid Categories:${NC}"
+    for prefix in "${VALID_PREFIXES[@]}"; do
+        case $prefix in
+            "feature") echo "  • feature/  - New features or enhancements" ;;
+            "bugfix")  echo "  • bugfix/   - Bug fixes" ;;
+            "hotfix")  echo "  • hotfix/   - Critical production fixes" ;;
+            "test")    echo "  • test/     - Experimental features or testing" ;;
+            "chore")   echo "  • chore/    - Maintenance tasks, refactoring" ;;
+            "docs")    echo "  • docs/     - Documentation updates" ;;
+            "dev")     echo "  • dev/      - Development branches" ;;
+            "qa")      echo "  • qa/       - QA and staging branches" ;;
+            "release") echo "  • release/  - Release preparation branches" ;;
+        esac
+    done
+    echo ""
+    echo -e "${YELLOW}Rules:${NC}"
+    echo "  • Use lowercase letters, numbers, and hyphens only"
+    echo "  • Description should be 3-50 characters"
+    echo "  • Avoid numbers-only descriptions"
+    echo "  • Be descriptive but concise"
+    echo "  • Include issue number when applicable: feature/123-description"
+}
+
+# Main execution
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    if [[ $# -eq 0 ]]; then
+        echo "Usage: $0 <branch-name> [--help]"
+        echo "       $0 --help    Show naming guidelines"
+        exit 1
+    fi
+    
+    if [[ "$1" == "--help" ]]; then
+        show_naming_help
+        exit 0
+    fi
+    
+    validate_branch_name "$1"
+    exit $?
+fi

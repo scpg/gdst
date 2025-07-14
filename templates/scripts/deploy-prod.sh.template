@@ -1,0 +1,7 @@
+#!/bin/bash
+echo "Deploying to Production..."
+git checkout main
+git pull origin main
+git merge qa/staging
+git push origin main
+echo "Deployed to Production environment"

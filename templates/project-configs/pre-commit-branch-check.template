@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# Pre-commit Git hook to validate current branch name
+# This hook validates the branch name before allowing commits
+
+# Get current branch name
+branch_name=$(git rev-parse --abbrev-ref HEAD)
+
+# Get the directory where this script is located
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# Try to find the validation script in common locations
+VALIDATION_SCRIPT=""
+if [[ -f "$REPO_ROOT/scripts/validate-branch-name.sh" ]]; then
+    VALIDATION_SCRIPT="$REPO_ROOT/scripts/validate-branch-name.sh"
+elif [[ -f "$REPO_ROOT/.git/hooks/validate-branch-name.sh" ]]; then
+    VALIDATION_SCRIPT="$REPO_ROOT/.git/hooks/validate-branch-name.sh"
+fi
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+echo -e "${YELLOW}Validating branch name: $branch_name${NC}"
+
+# Use validation script if available, otherwise basic validation
+if [[ -n "$VALIDATION_SCRIPT" && -f "$VALIDATION_SCRIPT" ]]; then
+    if ! bash "$VALIDATION_SCRIPT" "$branch_name"; then
+        echo -e "${RED}❌ Commit rejected: Invalid branch name '$branch_name'${NC}"
+        echo -e "${YELLOW}Please rename your branch to follow the naming convention${NC}"
+        echo -e "${YELLOW}Run 'scripts/validate-branch-name.sh --help' for naming guidelines${NC}"
+        echo ""
+        echo -e "${YELLOW}To rename your current branch:${NC}"
+        echo "git branch -m $branch_name <new-branch-name>"
+        exit 1
+    fi
+else
+    # Basic validation if validation script is not available
+    if [[ ! "$branch_name" =~ ^(main|master|dev/main|qa/staging|feature/|bugfix/|hotfix/|test/|chore/|docs/|dev/|qa/|release/) ]]; then
+        echo -e "${RED}❌ Commit rejected: Invalid branch name '$branch_name'${NC}"
+        echo -e "${YELLOW}Branch names should start with: feature/, bugfix/, hotfix/, test/, chore/, docs/, dev/, qa/, or release/${NC}"
+        echo -e "${YELLOW}Or be one of the protected branches: main, master, dev/main, qa/staging${NC}"
+        echo ""
+        echo -e "${YELLOW}To rename your current branch:${NC}"
+        echo "git branch -m $branch_name <new-branch-name>"
+        exit 1
+    fi
+fi
+
+echo -e "${GREEN}✅ Branch name validation passed${NC}"
+exit 0

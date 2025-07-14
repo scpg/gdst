@@ -1,0 +1,469 @@
+#!/bin/bash
+
+# GitHub Repository Rulesets Setup Script
+# Creates enterprise-grade GitHub rulesets following best practices from github/ruleset-recipes
+# Features: Enhanced branch protection, conventional commits, tag protection, semantic versioning
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Configuration options
+ENABLE_CONVENTIONAL_COMMITS=true
+ENABLE_TAG_PROTECTION=true
+ENABLE_SEMANTIC_VERSIONING=true
+REQUIRED_REVIEW_COUNT=2
+ENABLE_ENHANCED_FEATURES=true
+
+# Function to print colored output
+print_status() {
+    echo -e "${GREEN}[INFO]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+print_header() {
+    echo -e "${BLUE}=== $1 ===${NC}"
+}
+
+# Function to create enhanced branch protection ruleset with best practices
+create_enhanced_branch_protection_ruleset() {
+    local repo_owner="$1"
+    local repo_name="$2"
+    
+    print_header "Creating Enhanced Branch Protection Ruleset"
+    
+    # Build the ruleset JSON with conditional features
+    local conventional_commits_rule=""
+    if [ "$ENABLE_CONVENTIONAL_COMMITS" = true ]; then
+        conventional_commits_rule=',
+    {
+      "type": "commit_message_pattern",
+      "parameters": {
+        "name": "Conventional Commits",
+        "negate": false,
+        "pattern": "^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test){1}(\\\\([\\\\w\\\\-\\\\.]+\\\\))?(!)?: ([\\\\w ])+([\\\\s\\\\S]*)",
+        "operator": "regex"
+      }
+    }'
+    fi
+    
+    local ruleset_json=$(cat << EOF
+{
+  "name": "Enhanced Branch Protection",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": ["refs/heads/main", "refs/heads/dev/main", "refs/heads/qa/staging"],
+      "exclude": []
+    }
+  },
+  "rules": [
+    {
+      "type": "pull_request",
+      "parameters": {
+        "require_code_owner_review": false,
+        "require_last_push_approval": true,
+        "dismiss_stale_reviews_on_push": true,
+        "required_approving_review_count": $REQUIRED_REVIEW_COUNT,
+        "required_review_thread_resolution": true
+      }
+    },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "required_status_checks": [
+          {
+            "context": "ci-cd-validation",
+            "integration_id": null
+          },
+          {
+            "context": "branch-name-validation", 
+            "integration_id": null
+          }
+        ],
+        "strict_required_status_checks_policy": true
+      }
+    }$conventional_commits_rule,
+    {
+      "type": "deletion"
+    },
+    {
+      "type": "non_fast_forward"
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_id": 1,
+      "actor_type": "OrganizationAdmin",
+      "bypass_mode": "always"
+    }
+  ]
+}
+EOF
+)
+
+    print_status "Creating enhanced branch protection ruleset..."
+    print_status "Features: Enhanced PR reviews, status checks, conventional commits"
+    
+    # Create the ruleset
+    if echo "$ruleset_json" | gh api repos/"$repo_owner"/"$repo_name"/rulesets --method POST --input -; then
+        print_status "✅ Enhanced branch protection ruleset created successfully"
+    else
+        print_warning "❌ Failed to create enhanced branch protection ruleset"
+        print_warning "This might be due to insufficient permissions or repository settings"
+        return 1
+    fi
+}
+
+# Function to create tag protection ruleset with semantic versioning
+create_tag_protection_ruleset() {
+    local repo_owner="$1"
+    local repo_name="$2"
+    
+    if [ "$ENABLE_TAG_PROTECTION" != true ]; then
+        print_status "Tag protection disabled, skipping..."
+        return 0
+    fi
+    
+    print_header "Creating Tag Protection & Semantic Versioning Ruleset"
+    
+    # Build semantic versioning rule conditionally
+    local semantic_versioning_rule=""
+    if [ "$ENABLE_SEMANTIC_VERSIONING" = true ]; then
+        semantic_versioning_rule='
+    {
+      "type": "creation",
+      "parameters": {
+        "name": "Semantic Versioning",
+        "negate": false,
+        "pattern": "^v(0|[1-9]\\\\d*)\\\\.(0|[1-9]\\\\d*)\\\\.(0|[1-9]\\\\d*)(?:-((?:0|[1-9]\\\\d*|\\\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\\\.(?:0|[1-9]\\\\d*|\\\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\\\+([0-9a-zA-Z-]+(?:\\\\.[0-9a-zA-Z-]+)*))?$",
+        "operator": "regex"
+      }
+    },'
+    fi
+    
+    local tag_ruleset_json=$(cat << EOF
+{
+  "name": "Tag Protection & Semantic Versioning",
+  "target": "tag",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": ["~ALL"],
+      "exclude": []
+    }
+  },
+  "rules": [$semantic_versioning_rule
+    {
+      "type": "deletion"
+    },
+    {
+      "type": "non_fast_forward" 
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_id": 1,
+      "actor_type": "OrganizationAdmin",
+      "bypass_mode": "always"
+    }
+  ]
+}
+EOF
+)
+
+    print_status "Creating tag protection ruleset..."
+    print_status "Features: Tag deletion prevention, semantic versioning enforcement"
+    
+    # Create the tag protection ruleset
+    if echo "$tag_ruleset_json" | gh api repos/"$repo_owner"/"$repo_name"/rulesets --method POST --input -; then
+        print_status "✅ Tag protection ruleset created successfully"
+    else
+        print_warning "❌ Failed to create tag protection ruleset"
+        return 1
+    fi
+}
+
+# Function to create feature branch standards ruleset
+create_feature_branch_ruleset() {
+    local repo_owner="$1"
+    local repo_name="$2"
+    
+    print_header "Creating Feature Branch Standards Ruleset"
+    
+    local feature_ruleset_json=$(cat << 'EOF'
+{
+  "name": "Feature Branch Standards",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": ["refs/heads/feature/**", "refs/heads/bugfix/**", "refs/heads/hotfix/**"],
+      "exclude": []
+    }
+  },
+  "rules": [
+    {
+      "type": "commit_message_pattern",
+      "parameters": {
+        "name": "Feature Branch Commits",
+        "negate": false,
+        "pattern": "^(feat|fix|hotfix|docs|style|refactor|test|chore)(\\(.+\\))?: .{1,50}",
+        "operator": "regex"
+      }
+    },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "required_status_checks": [
+          {
+            "context": "branch-name-validation",
+            "integration_id": null
+          }
+        ],
+        "strict_required_status_checks_policy": false
+      }
+    },
+    {
+      "type": "update"
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_id": 1,
+      "actor_type": "OrganizationAdmin",
+      "bypass_mode": "always"
+    }
+  ]
+}
+EOF
+)
+
+    print_status "Creating feature branch standards ruleset..."
+    print_status "Features: Commit message validation, branch name validation"
+    
+    # Create the feature branch ruleset
+    if echo "$feature_ruleset_json" | gh api repos/"$repo_owner"/"$repo_name"/rulesets --method POST --input -; then
+        print_status "✅ Feature branch standards ruleset created successfully"
+    else
+        print_warning "❌ Failed to create feature branch standards ruleset"
+        return 1
+    fi
+}
+
+# Function to create development branch standards ruleset
+create_development_branch_ruleset() {
+    local repo_owner="$1"
+    local repo_name="$2"
+    
+    print_header "Creating Development Branch Standards Ruleset"
+    
+    local dev_ruleset_json=$(cat << 'EOF'
+{
+  "name": "Development Branch Standards",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": ["refs/heads/test/**", "refs/heads/chore/**", "refs/heads/docs/**"],
+      "exclude": []
+    }
+  },
+  "rules": [
+    {
+      "type": "commit_message_pattern",
+      "parameters": {
+        "name": "Development Branch Commits",
+        "negate": false,
+        "pattern": "^(test|chore|docs)(\\(.+\\))?: .{1,50}",
+        "operator": "regex"
+      }
+    },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "required_status_checks": [
+          {
+            "context": "branch-name-validation",
+            "integration_id": null
+          }
+        ],
+        "strict_required_status_checks_policy": false
+      }
+    },
+    {
+      "type": "update"
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_id": 1,
+      "actor_type": "OrganizationAdmin",
+      "bypass_mode": "always"
+    }
+  ]
+}
+EOF
+)
+
+    print_status "Creating development branch standards ruleset..."
+    print_status "Features: Development-specific commit patterns, branch validation"
+    
+    # Create the development branch ruleset
+    if echo "$dev_ruleset_json" | gh api repos/"$repo_owner"/"$repo_name"/rulesets --method POST --input -; then
+        print_status "✅ Development branch standards ruleset created successfully"
+    else
+        print_warning "❌ Failed to create development branch standards ruleset"
+        return 1
+    fi
+}
+
+# Function to setup repository rulesets
+setup_repository_rulesets() {
+    local repo_owner="$1"
+    local repo_name="$2"
+    
+    if [[ -z "$repo_owner" || -z "$repo_name" ]]; then
+        print_error "Repository owner and name are required"
+        print_error "Usage: setup_repository_rulesets <owner> <repo_name>"
+        return 1
+    fi
+    
+    print_header "Setting up GitHub Repository Rulesets"
+    print_status "Repository: $repo_owner/$repo_name"
+    
+    # Check if we can access the repository
+    if ! gh api repos/"$repo_owner"/"$repo_name" >/dev/null 2>&1; then
+        print_error "Cannot access repository $repo_owner/$repo_name"
+        print_error "Please check that:"
+        print_error "1. Repository exists"
+        print_error "2. You have admin access to the repository"
+        print_error "3. GitHub CLI is authenticated (run 'gh auth status')"
+        return 1
+    fi
+    
+    # Create rulesets
+    local success_count=0
+    local total_count=4
+    
+    if create_enhanced_branch_protection_ruleset "$repo_owner" "$repo_name"; then
+        ((success_count++))
+    fi
+    
+    if create_tag_protection_ruleset "$repo_owner" "$repo_name"; then
+        ((success_count++))
+    fi
+    
+    if create_feature_branch_ruleset "$repo_owner" "$repo_name"; then
+        ((success_count++))
+    fi
+    
+    if create_development_branch_ruleset "$repo_owner" "$repo_name"; then
+        ((success_count++))
+    fi
+    
+    print_header "Ruleset Setup Summary"
+    print_status "Created $success_count out of $total_count rulesets"
+    
+    if [[ $success_count -eq $total_count ]]; then
+        print_status "🎉 All rulesets created successfully!"
+    elif [[ $success_count -gt 0 ]]; then
+        print_warning "⚠️  Some rulesets were created, but not all"
+        print_warning "Check the error messages above for details"
+    else
+        print_error "❌ No rulesets were created"
+        print_error "This might be due to insufficient permissions"
+    fi
+    
+    # Show current rulesets
+    print_header "Current Repository Rulesets"
+    if gh ruleset list 2>/dev/null; then
+        print_status "Rulesets listed above"
+    else
+        print_warning "Could not list rulesets (might need admin permissions)"
+    fi
+    
+    return 0
+}
+
+# Function to show ruleset management help
+show_ruleset_help() {
+    cat << EOF
+GitHub Repository Rulesets Management
+
+USAGE:
+    $0 setup <owner> <repo_name>     Setup rulesets for a repository
+    $0 list                          List current rulesets
+    $0 delete <ruleset_id>           Delete a specific ruleset
+    $0 help                          Show this help
+
+EXAMPLES:
+    $0 setup myuser myrepo           # Setup rulesets for myuser/myrepo
+    $0 list                          # List all rulesets
+    $0 delete 12345                  # Delete ruleset with ID 12345
+
+RULESETS CREATED:
+    1. Enhanced Branch Protection     - Advanced PR requirements, conventional commits, status checks
+    2. Tag Protection & Versioning   - Prevents tag deletion, enforces semantic versioning
+    3. Feature Branch Standards       - Commit validation for feature/bugfix/hotfix branches
+    4. Development Branch Standards   - Commit validation for test/chore/docs branches
+
+FEATURES:
+    • Conventional Commits enforcement
+    • Required status checks (CI/CD, branch validation)
+    • Enhanced pull request requirements (2 approvals, thread resolution)
+    • Tag deletion prevention and semantic versioning
+    • Branch-specific commit message patterns
+    • Organization admin bypass controls
+
+REQUIREMENTS:
+    • GitHub CLI authenticated with admin access to the repository
+    • Repository must exist and be accessible
+    • Admin permissions on the target repository
+
+EOF
+}
+
+# Main execution
+case "${1:-}" in
+    "setup")
+        if [[ $# -lt 3 ]]; then
+            print_error "Missing arguments for setup command"
+            show_ruleset_help
+            exit 1
+        fi
+        setup_repository_rulesets "$2" "$3"
+        ;;
+    "list")
+        print_header "Repository Rulesets"
+        gh ruleset list
+        ;;
+    "delete")
+        if [[ -z "$2" ]]; then
+            print_error "Ruleset ID is required for delete command"
+            show_ruleset_help
+            exit 1
+        fi
+        print_status "Deleting ruleset $2..."
+        gh api repos/$(gh repo view --json owner,name --jq '.owner.login + "/" + .name')/rulesets/"$2" --method DELETE
+        ;;
+    "help"|"--help"|"-h"|"")
+        show_ruleset_help
+        ;;
+    *)
+        print_error "Unknown command: $1"
+        show_ruleset_help
+        exit 1
+        ;;
+esac
