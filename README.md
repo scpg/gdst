@@ -38,6 +38,23 @@ If you want to **contribute to or test the GDST tool**, see the [Contributing](#
 ./gdst.sh --help
 ```
 
+## 🎬 Try the Demo First!
+
+**Before running GDST on a real project, try the demo to see what it creates:**
+
+```bash
+# Interactive demo - shows the complete workflow and completion message
+./demo/demo_completion_message.sh
+
+# Quick demo - shows the completion message without pauses
+./demo/demo_quick.sh
+
+# Custom demo with your parameters
+./demo/demo_completion_message.sh my-project myusername python
+```
+
+The demo shows you exactly what GDST will create and how to use the generated project structure.
+
 ## Features
 
 - ✅ Complete project scaffolding for Node.js, Python, Java, and generic projects

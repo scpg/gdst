@@ -4,6 +4,28 @@
 
 The `gdst.sh` script provides comprehensive command-line options for automated development workflow setup.
 
+## 🎬 **Try the Demo First!**
+
+**Before using GDST on a real project, explore the demo to understand what it creates:**
+
+```bash
+# Interactive demo - shows the complete workflow step by step
+./demo/demo_completion_message.sh
+
+# Quick demo - shows the completion message without pauses
+./demo/demo_quick.sh
+
+# Custom demo with your parameters
+./demo/demo_completion_message.sh my-project myusername python
+```
+
+The demo demonstrates:
+- ✅ What files and directories are created
+- ✅ The completion message you'll see
+- ✅ Common development commands
+- ✅ Branch protection and rulesets information
+- ✅ Emergency cleanup commands
+
 ## 📋 **Usage**
 
 ### **Command-Line Mode**
