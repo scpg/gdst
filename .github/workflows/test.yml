@@ -12,35 +12,52 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       
     - name: Set up environment
       run: |
         sudo apt-get update
-        sudo apt-get install -y git curl bc xmlstarlet
+        sudo apt-get install -y git curl bc xmlstarlet shellcheck
         
     - name: Make scripts executable
-      run: chmod +x gdst.sh test/*.sh
+      run: |
+        chmod +x gdst.sh
+        chmod +x test/*.sh
+        chmod +x run_bats.sh
+        
+    - name: Install bats testing framework
+      run: |
+        git clone https://github.com/bats-core/bats-core.git test/bats
+        git clone https://github.com/bats-core/bats-support.git test/bats-support
+        git clone https://github.com/bats-core/bats-assert.git test/bats-assert
+        
+    - name: Run main test suite
+      run: ./test/run_tests.sh
       
-    - name: Run test suite
+    - name: Run bats tests
+      run: ./run_bats.sh -a
+      
+    - name: Run CI test suite
       run: ./test/ci_test.sh
       
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-results
         path: /tmp/gdst-ci-results/
+        retention-days: 7
         
     - name: Publish test results
       uses: EnricoMi/publish-unit-test-result-action@v2
       if: always()
       with:
         files: /tmp/gdst-ci-results/junit/*.xml
+        check_name: "GDST Test Results"
         
     - name: Comment PR with results
-      uses: actions/github-script@v6
-      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      if: github.event_name == 'pull_request' && always()
       with:
         script: |
           const fs = require('fs');
@@ -62,15 +79,17 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
+      
+    - name: Make scripts executable
+      run: chmod +x gdst.sh test/*.sh
       
     - name: Run security tests
-      run: |
-        chmod +x test/*.sh
-        ./test/run_tests.sh security
+      run: ./test/run_tests.sh security
         
     - name: Run shellcheck
       run: |
+        sudo apt-get update
         sudo apt-get install -y shellcheck
         shellcheck gdst.sh
         find . -name "*.sh" -path "./test/*" -exec shellcheck {} \;
@@ -81,13 +100,13 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
+      
+    - name: Make scripts executable
+      run: chmod +x gdst.sh test/*.sh
       
     - name: Run performance tests
-      run: |
-        chmod +x test/*.sh
-        ./test/run_tests.sh --performance
+      run: ./test/run_tests.sh --performance
         
     - name: Run stress tests
-      run: |
-        ./test/run_tests.sh --stress
+      run: ./test/run_tests.sh --stress
