@@ -2,14 +2,15 @@
 
 ---
 > [!IMPORTANT]
-> ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️ \
-> ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️ \
+> 🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧 \
+> ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️ 
 > 
-> **Work in Progress** - This tool is not yet ready for production use. If used, it is at your own risk. \
+> # **Work in Progress** 
+> This tool is not yet ready for production use. If used, it is at your own risk. 
 >
-> ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️ \
-> ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️ \
-> **This tool automates GitHub repository creation and management. Please ensure you have proper permissions and understand the implications before running GDST on production repositories.**
+> ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️ \
+> 🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧🚧 \
+> **GDST aims to automate GitHub repository creation and management. Please ensure you have proper permissions and understand the implications before running it on production repositories.**
 ---
 
 How did GDST came to live, just a need, and a wish to learn.
