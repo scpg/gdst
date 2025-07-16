@@ -1,4 +1,8 @@
 # GDST - GitHub Development Setup Tool
+How did GDST came to live, just a need, and a wish to learn.
+* Need... to have some additiona automation on top of GIT and GitHub,  
+* Wish to learn, for sure with a lot of assistance of AI
+
 
 🚀 **Automates the creation of GitHub repositories with proper branching strategies, CI/CD pipelines, and development tools.**
 
