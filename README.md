@@ -1,7 +1,15 @@
 # GDST - GitHub Development Setup Tool
+
+---
+> [!IMPORTANT]
+> ⚠️ **Work in Progress** - This tool is not yet ready for production use. If used, it is at your own risk.
+> 
+> **This tool automates GitHub repository creation and management. Please ensure you have proper permissions and understand the implications before running GDST on production repositories.**
+---
+
 How did GDST came to live, just a need, and a wish to learn.
 * Need... to have some additiona automation on top of GIT and GitHub,  
-* Wish to learn, for sure with a lot of assistance of AI
+* Wish... to learn, for sure with a lot of assistance of AI
 
 
 🚀 **Automates the creation of GitHub repositories with proper branching strategies, CI/CD pipelines, and development tools.**
