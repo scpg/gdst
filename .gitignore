@@ -7,6 +7,11 @@
 gdst.conf
 !gdst.conf.example
 
+# Testing framework dependencies (installed via clone)
+test/bats/
+test/bats-assert/
+test/bats-support/
+
 # IDEs and editors
 .idea/
 .vscode/
