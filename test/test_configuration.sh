@@ -9,21 +9,41 @@ test_config_file_loading() {
     start_test "Configuration file loading"
     
     local test_dir=$(create_test_dir "config-test")
-    local config_file="$test_dir/.gdst.conf"
+    local config_file="$test_dir/gdst.conf"
     
     # Create test configuration file
     cat > "$config_file" << EOF
-DEFAULT_PROJECT_TYPE="python"
-DEFAULT_VISIBILITY="private"
+PROJECT_TYPE=python
+REPO_VISIBILITY=private
 VERBOSE_MODE=true
-LOG_LEVEL="DEBUG"
+LOG_LEVEL=DEBUG
 EOF
     
-    run_gdst_dry_run "-n test-project -u testuser -d $test_dir"
+    # Change to test directory and run GDST from there
+    local original_dir=$(pwd)
+    cd "$test_dir"
+    
+    # Run GDST with config file in current directory and command line args that should override
+    local temp_output="$TEST_TEMP_DIR/gdst_output_$$"
+    "$GDST_SCRIPT_DIR/gdst.sh" -n test-project -u testuser -t node --dry-run > "$temp_output" 2>&1
+    local exit_code=$?
+    
+    # Restore original directory
+    cd "$original_dir"
+    
+    # Store output for assertions
+    if [[ -f "$temp_output" ]]; then
+        GDST_OUTPUT=$(cat "$temp_output")
+    else
+        GDST_OUTPUT=""
+    fi
+    GDST_EXIT_CODE=$exit_code
     
     if assert_exit_code 0 $GDST_EXIT_CODE "Should exit successfully" &&
        assert_contains "$GDST_OUTPUT" "Project Type: node" "Should use command line over config for type" &&
-       assert_contains "$GDST_OUTPUT" "Repository Visibility: public" "Should use default visibility"; then
+       assert_contains "$GDST_OUTPUT" "Repository Visibility: private" "Should use config value when not overridden by command line" &&
+       assert_contains "$GDST_OUTPUT" "Verbose Mode: Yes" "Should use config value for verbose mode" &&
+       assert_contains "$GDST_OUTPUT" "Log Level: DEBUG" "Should use config value for log level"; then
         pass_test "Configuration file loading works correctly"
     fi
 }
@@ -41,8 +61,8 @@ test_template_validation() {
     fi
 }
 
-test_project_structure_creation() {
-    start_test "Project structure creation for different types"
+test_project_structure_creation_node() {
+    start_test "Node.js project structure creation"
     
     # Test Node.js project structure
     run_gdst_dry_run "-n test-node -u testuser -t node --verbose"
@@ -52,6 +72,10 @@ test_project_structure_creation() {
        assert_contains "$GDST_OUTPUT" "Would create sample files: src/index.js, tests/index.test.js" "Should create Node.js files"; then
         pass_test "Node.js project structure creation works correctly"
     fi
+}
+
+test_project_structure_creation_python() {
+    start_test "Python project structure creation"
     
     # Test Python project structure
     run_gdst_dry_run "-n test-python -u testuser -t python --verbose"
@@ -112,8 +136,8 @@ test_branch_validation_setup() {
     fi
 }
 
-test_project_specific_configurations() {
-    start_test "Project-specific configurations"
+test_project_specific_configurations_java() {
+    start_test "Java project-specific configurations"
     
     # Test Java project specific configuration
     run_gdst_dry_run "-n test-java -u testuser -t java --verbose"
@@ -123,6 +147,10 @@ test_project_specific_configurations() {
        assert_contains "$GDST_OUTPUT" "Would create .gitignore for java project" "Should create Java gitignore"; then
         pass_test "Java project-specific configurations work correctly"
     fi
+}
+
+test_project_specific_configurations_python() {
+    start_test "Python project-specific configurations"
     
     # Test Python project specific configuration
     run_gdst_dry_run "-n test-python -u testuser -t python --verbose"
@@ -175,12 +203,14 @@ run_configuration_tests() {
     
     test_config_file_loading
     test_template_validation
-    test_project_structure_creation
+    test_project_structure_creation_node
+    test_project_structure_creation_python
     test_github_workflow_creation
     test_helper_scripts_creation
     test_documentation_creation
     test_branch_validation_setup
-    test_project_specific_configurations
+    test_project_specific_configurations_java
+    test_project_specific_configurations_python
     test_environment_file_creation
     test_readme_generation
     test_next_steps_guidance

@@ -59,6 +59,36 @@ The demo demonstrates:
 | `--help` | `-h` | Show help | `--help` |
 | `--version` | | Show version | `--version` |
 
+## ⚙️ **Configuration File Support**
+
+GDST supports configuration files to set default values for common parameters:
+
+```bash
+# Copy the example configuration file
+cp gdst.conf.example gdst.conf
+
+# Edit with your preferred defaults
+nano gdst.conf
+```
+
+**Configuration file format:**
+```bash
+# Example gdst.conf
+REPO_NAME=""
+GITHUB_USERNAME="your-username"
+PROJECT_TYPE="python"
+REPO_VISIBILITY="private"
+VERBOSE_MODE=true
+LOG_LEVEL="DEBUG"
+```
+
+**Configuration behavior:**
+- ✅ Configuration file values are used as defaults
+- ✅ Command-line arguments override configuration values
+- ✅ Supports all main GDST parameters
+- ✅ Comments and empty lines are ignored
+- ✅ File is automatically ignored by git
+
 ## 🎯 **Project Types Supported**
 
 - **`node`** - Node.js with package.json, Jest, ESLint, Prettier

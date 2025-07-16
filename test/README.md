@@ -34,7 +34,8 @@ Tests advanced GDST features including:
 
 #### 3. Configuration Tests (`test_configuration.sh`)
 Tests configuration and template processing:
-- Configuration file loading (.gdst.conf)
+- Configuration file loading (gdst.conf)
+- Configuration file precedence (command-line overrides config)
 - Template validation and processing
 - Project structure creation
 - GitHub workflow and documentation generation

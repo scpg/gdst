@@ -38,6 +38,28 @@ If you want to **contribute to or test the GDST tool**, see the [Contributing](#
 ./gdst.sh --help
 ```
 
+## ⚙️ Configuration File Support
+
+**GDST supports configuration files for setting default values:**
+
+```bash
+# Copy the example configuration file
+cp gdst.conf.example gdst.conf
+
+# Edit the configuration file with your defaults
+nano gdst.conf
+
+# Now you can run GDST with fewer arguments
+./gdst.sh  # Will use values from gdst.conf as defaults
+```
+
+**Configuration file features:**
+- ✅ Set default values for common parameters
+- ✅ Command-line arguments override configuration values
+- ✅ Supports all main GDST options
+- ✅ Comments and empty lines are ignored
+- ✅ Configuration file is automatically ignored by git
+
 ## 🎬 Try the Demo First!
 
 **Before running GDST on a real project, try the demo to see what it creates:**

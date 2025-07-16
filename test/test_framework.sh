@@ -55,6 +55,9 @@ cleanup_test_framework() {
         rm -rf "$TEST_TEMP_DIR"
     fi
     
+    # Calculate incomplete tests
+    local incomplete_tests=$((TESTS_TOTAL - TESTS_PASSED - TESTS_FAILED - TESTS_SKIPPED))
+    
     # Print final summary
     echo ""
     echo -e "${BLUE}=== Test Summary ===${NC}"
@@ -62,6 +65,11 @@ cleanup_test_framework() {
     echo -e "Passed: ${GREEN}$TESTS_PASSED${NC}"
     echo -e "Failed: ${RED}$TESTS_FAILED${NC}"
     echo -e "Skipped: ${YELLOW}$TESTS_SKIPPED${NC}"
+    
+    if [[ $incomplete_tests -gt 0 ]]; then
+        echo -e "Incomplete: ${YELLOW}$incomplete_tests${NC}"
+        TESTS_FAILED=$((TESTS_FAILED + incomplete_tests))
+    fi
     
     if [[ $TESTS_FAILED -gt 0 ]]; then
         echo -e "${RED}Some tests failed!${NC}"

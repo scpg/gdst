@@ -28,6 +28,94 @@ VERBOSE_MODE=false
 LOG_LEVEL="INFO" # INFO, WARN, ERROR, DEBUG
 WORKING_DIR="$(pwd)"
 
+# Function to load configuration file
+load_config_file() {
+    local config_file="${1:-gdst.conf}"
+    
+    # Quick pre-parse to check for -d/--directory option
+    local target_dir="$WORKING_DIR"
+    local args=("$@")
+    for ((i=0; i<${#args[@]}; i++)); do
+        case "${args[i]}" in
+            -d|--directory)
+                if [ $((i+1)) -lt ${#args[@]} ]; then
+                    target_dir="${args[$((i+1))]}"
+                    break
+                fi
+                ;;
+        esac
+    done
+    
+    # Check if config file exists in script directory first, then in target directory
+    local config_path=""
+    if [ -f "${SCRIPT_DIR}/${config_file}" ]; then
+        config_path="${SCRIPT_DIR}/${config_file}"
+    elif [ -f "${target_dir}/${config_file}" ]; then
+        config_path="${target_dir}/${config_file}"
+    fi
+    
+    if [ -n "$config_path" ]; then
+        print_debug "Loading configuration from: $config_path"
+        # Source the config file in a safe manner
+        while IFS='=' read -r key value; do
+            # Skip comments and empty lines
+            [[ "$key" =~ ^[[:space:]]*# ]] && continue
+            [[ -z "$key" ]] && continue
+            
+            # Remove leading/trailing whitespace and quotes
+            key=$(echo "$key" | xargs)
+            value=$(echo "$value" | xargs | sed 's/^"//; s/"$//')
+            
+            # Only set if the value is not empty and variable is not already set by command line
+            if [[ -n "$value" ]]; then
+                case "$key" in
+                    REPO_NAME)
+                        [[ -z "$REPO_NAME" ]] && REPO_NAME="$value"
+                        ;;
+                    GITHUB_USERNAME)
+                        [[ -z "$GITHUB_USERNAME" ]] && GITHUB_USERNAME="$value"
+                        ;;
+                    PROJECT_TYPE)
+                        # Only use config value if still at default
+                        [[ "$PROJECT_TYPE" == "node" ]] && PROJECT_TYPE="$value"
+                        ;;
+                    REPO_VISIBILITY)
+                        # Only use config value if still at default
+                        [[ "$REPO_VISIBILITY" == "public" ]] && REPO_VISIBILITY="$value"
+                        ;;
+                    WORKING_DIR)
+                        # Only use config value if still at default
+                        [[ "$WORKING_DIR" == "$(pwd)" ]] && WORKING_DIR="$value"
+                        ;;
+                    SKIP_INSTALL)
+                        # Only use config value if still at default
+                        [[ "$SKIP_INSTALL" == "false" ]] && SKIP_INSTALL="$value"
+                        ;;
+                    SKIP_PROTECTION)
+                        # Only use config value if still at default
+                        [[ "$SKIP_PROTECTION" == "false" ]] && SKIP_PROTECTION="$value"
+                        ;;
+                    DRY_RUN)
+                        # Only use config value if still at default
+                        [[ "$DRY_RUN" == "false" ]] && DRY_RUN="$value"
+                        ;;
+                    VERBOSE_MODE)
+                        # Only use config value if still at default
+                        [[ "$VERBOSE_MODE" == "false" ]] && VERBOSE_MODE="$value"
+                        ;;
+                    LOG_LEVEL)
+                        # Only use config value if still at default
+                        [[ "$LOG_LEVEL" == "INFO" ]] && LOG_LEVEL="$value"
+                        ;;
+                esac
+            fi
+        done < "$config_path"
+        print_debug "Configuration loaded successfully"
+    else
+        print_debug "No configuration file found (checked: ${SCRIPT_DIR}/${config_file} and ${WORKING_DIR}/${config_file})"
+    fi
+}
+
 # Function to print colored output
 print_status() {
     if [[ "$LOG_LEVEL" =~ ^(INFO|DEBUG)$ ]]; then
@@ -1808,7 +1896,11 @@ show_configuration() {
 
 # Main execution function
 main() {
-    # Parse command line arguments first
+    # Load configuration file first (before argument parsing)
+    # Pass arguments to allow pre-parsing for -d option
+    load_config_file "gdst.conf" "$@"
+    
+    # Parse command line arguments (these will override config file values)
     parse_arguments "$@"
     
     # Validate arguments

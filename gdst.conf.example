@@ -1,5 +1,8 @@
 # GDST Configuration File Example
-# Copy this file to .gdst.conf and customize as needed
+# Copy this file to gdst.conf and customize as needed
+#
+# This file allows you to set default values for GDST parameters.
+# Command-line arguments will override these defaults.
 
 # Project defaults
 REPO_NAME=""
@@ -15,7 +18,7 @@ DRY_RUN=false
 VERBOSE_MODE=false
 LOG_LEVEL="INFO"
 
-# Advanced settings
+# Advanced settings (for future use)
 AUTO_PUSH=true
 CREATE_INITIAL_COMMIT=true
 SETUP_HOOKS=true

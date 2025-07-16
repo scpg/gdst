@@ -3,6 +3,10 @@
 .env.*
 !.env.{template,example}*
 
+# Configuration files
+gdst.conf
+!gdst.conf.example
+
 # IDEs and editors
 .idea/
 .vscode/

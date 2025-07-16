@@ -12,10 +12,12 @@ test_help_command() {
     
     if assert_exit_code 0 $GDST_EXIT_CODE "Help command should exit with code 0" &&
        assert_contains "$GDST_OUTPUT" "GDST - GitHub Development Setup Tool" "Should display tool name" &&
-       assert_contains "$GDST_OUTPUT" "USAGE:" "Should display usage section" &&
-       assert_contains "$GDST_OUTPUT" "OPTIONS:" "Should display options section" &&
-       assert_contains "$GDST_OUTPUT" "EXAMPLES:" "Should display examples section"; then
+       assert_contains "$GDST_OUTPUT" "Usage:" "Should display usage section" &&
+       assert_contains "$GDST_OUTPUT" "Required arguments:" "Should display required arguments section" &&
+       assert_contains "$GDST_OUTPUT" "Examples:" "Should display examples section"; then
         pass_test "Help command displays comprehensive usage information"
+    else
+        fail_test "Help command test failed"
     fi
 }
 
@@ -28,6 +30,8 @@ test_version_command() {
        assert_contains "$GDST_OUTPUT" "GDST - GitHub Development Setup Tool" "Should display tool name" &&
        assert_contains "$GDST_OUTPUT" "v1.0.0" "Should display version number"; then
         pass_test "Version command displays correct version information"
+    else
+        fail_test "Version command test failed"
     fi
 }
 
@@ -40,6 +44,8 @@ test_missing_required_parameters() {
        assert_contains "$GDST_OUTPUT" "Repository name is required" "Should show repository name error" &&
        assert_contains "$GDST_OUTPUT" "Use -n or --name" "Should show usage hint"; then
         pass_test "Missing required parameters handled correctly"
+    else
+        fail_test "Missing required parameters test failed"
     fi
 }
 
@@ -52,6 +58,8 @@ test_invalid_project_type() {
        assert_contains "$GDST_OUTPUT" "Invalid project type: invalid" "Should show invalid type error" &&
        assert_contains "$GDST_OUTPUT" "Supported: node, python, java, react, other" "Should show supported types"; then
         pass_test "Invalid project type handled correctly"
+    else
+        fail_test "Invalid project type test failed"
     fi
 }
 
@@ -64,6 +72,8 @@ test_invalid_visibility() {
        assert_contains "$GDST_OUTPUT" "Invalid repository visibility: invalid" "Should show invalid visibility error" &&
        assert_contains "$GDST_OUTPUT" "Supported: public, private" "Should show supported visibility options"; then
         pass_test "Invalid repository visibility handled correctly"
+    else
+        fail_test "Invalid repository visibility test failed"
     fi
 }
 
@@ -75,6 +85,8 @@ test_invalid_working_directory() {
     if assert_exit_code 1 $GDST_EXIT_CODE "Should exit with error code" &&
        assert_contains "$GDST_OUTPUT" "working directory does not exist" "Should show directory error"; then
         pass_test "Invalid working directory handled correctly"
+    else
+        fail_test "Invalid working directory test failed"
     fi
 }
 
@@ -90,6 +102,8 @@ test_basic_node_project() {
        assert_contains "$GDST_OUTPUT" "Setting up Node.js project structure" "Should setup Node.js structure" &&
        assert_contains "$GDST_OUTPUT" "Setup Complete!" "Should complete successfully"; then
         pass_test "Basic Node.js project created successfully"
+    else
+        fail_test "Basic Node.js project creation test failed"
     fi
 }
 
@@ -104,6 +118,8 @@ test_basic_python_project() {
        assert_contains "$GDST_OUTPUT" "Setting up Python project structure" "Should setup Python structure" &&
        assert_contains "$GDST_OUTPUT" "Setup Complete!" "Should complete successfully"; then
         pass_test "Basic Python project created successfully"
+    else
+        fail_test "Basic Python project creation test failed"
     fi
 }
 
@@ -118,6 +134,8 @@ test_basic_java_project() {
        assert_contains "$GDST_OUTPUT" "Setting up Java project structure" "Should setup Java structure" &&
        assert_contains "$GDST_OUTPUT" "Setup Complete!" "Should complete successfully"; then
         pass_test "Basic Java project created successfully"
+    else
+        fail_test "Basic Java project creation test failed"
     fi
 }
 
@@ -132,6 +150,8 @@ test_basic_react_project() {
        assert_contains "$GDST_OUTPUT" "Setting up Node.js project structure" "Should setup Node.js structure for React" &&
        assert_contains "$GDST_OUTPUT" "Setup Complete!" "Should complete successfully"; then
         pass_test "Basic React project created successfully"
+    else
+        fail_test "Basic React project creation test failed"
     fi
 }
 
@@ -146,6 +166,8 @@ test_basic_generic_project() {
        assert_contains "$GDST_OUTPUT" "Setting up generic project structure" "Should setup generic structure" &&
        assert_contains "$GDST_OUTPUT" "Setup Complete!" "Should complete successfully"; then
         pass_test "Basic generic project created successfully"
+    else
+        fail_test "Basic generic project creation test failed"
     fi
 }
 
