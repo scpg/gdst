@@ -9,8 +9,9 @@ PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 source "${PARENT_DIR}/constants.sh"
 
 # Demo configuration - customize these values for your demo
-REPO_NAME="${1:-my-awesome-project}"
-GITHUB_USERNAME="${2:-myusername}"
+SEED="$(printf "%04d" $((RANDOM % 10000)))"
+REPO_NAME="${1:-my-awesome-project-$SEED}"
+GITHUB_USERNAME="${2:-myusername-$SEED}"
 PROJECT_TYPE="${3:-node}"
 
 # Function to show typing animation
@@ -58,8 +59,8 @@ echo -e "${BLUE}=== 🎉 Setup Complete! 🎉 ===${NC}"
 echo -e "${GREEN}[INFO]${NC} Your development workflow is now ready!"
 echo
 echo -e "${GREEN}📋 What was created:${NC}"
-echo "  ✅ Local project directory: $REPO_NAME/"
-echo "  ✅ GitHub repository: https://github.com/$GITHUB_USERNAME/$REPO_NAME"
+echo -e "  ✅ Local project directory: ${BOLD}${BLUE}$REPO_NAME/${NC}"
+echo -e "  ✅ GitHub repository: ${BOLD}${BLUE}https://github.com/$GITHUB_USERNAME/$REPO_NAME${NC}"
 echo "  ✅ Branch structure: main → dev/main → qa/staging"
 echo "  ✅ CI/CD pipeline with GitHub Actions"
 echo "  ✅ Branch protection rules and rulesets"
@@ -74,7 +75,7 @@ echo "4. 🧪 Deploy to QA with: ./scripts/deploy-qa.sh"
 echo "5. 🚀 Deploy to production with: ./scripts/deploy-prod.sh"
 echo
 echo -e "${BLUE}📚 Resources:${NC}"
-echo "  🌐 Repository: https://github.com/$GITHUB_USERNAME/$REPO_NAME"
+echo -e "  🌐 Repository: ${BOLD}${BLUE}https://github.com/$GITHUB_USERNAME/$REPO_NAME${NC}"
 echo "  📖 Documentation: Check docs/ folder for detailed guides"
 echo "  🎯 Branch naming: docs/BRANCH_NAMING.md"
 echo "  🛠️  Development guide: docs/DEVELOPMENT.md"
@@ -147,10 +148,10 @@ pause_for_demo
 
 # Demo conclusion
 echo -e "${BOLD}${GREEN}╔══════════════════════════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BOLD}${GREEN}║                              🎉 DEMO COMPLETE! 🎉                                   ║${NC}"
+echo -e "${BOLD}${GREEN}║                              🎉 DEMO COMPLETE! 🎉                                    ║${NC}"
 echo -e "${BOLD}${GREEN}║                                                                                      ║${NC}"
-echo -e "${BOLD}${GREEN}║  Ready to try GDST for real? Run: ./gdst.sh -n your-project -u your-username       ║${NC}"
-echo -e "${BOLD}${GREEN}║  Need help? Run: ./gdst.sh --help                                                   ║${NC}"
+echo -e "${BOLD}${GREEN}║  Ready to try GDST for real? Run: ./gdst.sh -n your-project -u your-username         ║${NC}"
+echo -e "${BOLD}${GREEN}║  Need help? Run: ./gdst.sh --help                                                    ║${NC}"
 echo -e "${BOLD}${GREEN}╚══════════════════════════════════════════════════════════════════════════════════════╝${NC}"
 echo
 echo -e "${CYAN}Thank you for trying GDST! 🚀${NC}"
