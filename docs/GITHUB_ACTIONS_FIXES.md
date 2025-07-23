@@ -20,13 +20,13 @@
 - **Fix**: 
   - Added comprehensive chmod in main test job
   - Added dedicated script permission steps in other jobs
-  - Included `run_bats.sh` in executable permissions
+  - Included `test/run_bats.sh` in executable permissions
 
 ### 4. **Test Execution Flow Issues**
 - **Issue**: Only running CI test script, missing main test suite
 - **Fix**: Added logical test execution flow:
   1. Run main test suite (`./test/run_tests.sh`)
-  2. Run bats tests (`./run_bats.sh -a`)
+  2. Run bats tests (`./test/run_bats.sh -a`)
   3. Run CI test suite (`./test/ci_test.sh`)
 
 ### 5. **Missing Error Handling**
@@ -65,7 +65,7 @@
 
 ### Dual Testing Approach
 - **Custom Framework**: `./test/run_tests.sh` (49 tests)
-- **Bats Framework**: `./run_bats.sh -a` (example tests)
+- **Bats Framework**: `./test/run_bats.sh -a` (example tests)
 - **CI Integration**: `./test/ci_test.sh` (CI-specific reporting)
 
 ## Workflow Job Structure

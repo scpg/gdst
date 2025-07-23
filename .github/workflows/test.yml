@@ -28,7 +28,6 @@ jobs:
       run: |
         chmod +x gdst.sh
         chmod +x test/*.sh
-        chmod +x run_bats.sh
         
     - name: Install bats testing framework
       run: |
@@ -41,7 +40,7 @@ jobs:
       continue-on-error: true
       
     - name: Run bats tests
-      run: ./run_bats.sh -a
+      run: ./test/run_bats.sh -a
       continue-on-error: true
       
     - name: Run CI test suite

@@ -19,7 +19,7 @@
      - Command line override testing
 
 3. **Test Runner Script** ✅
-   - Created `run_bats.sh` for convenient test execution
+   - Created `test/run_bats.sh` for convenient test execution
    - Supports multiple options: `-e` (example), `-v` (verbose), `-t` (TAP), `-a` (all)
    - Includes comparison tools and migration help
 
@@ -55,16 +55,16 @@
 
 ```bash
 # Run example tests
-./run_bats.sh -e
+./test/run_bats.sh -e
 
 # Run with verbose output
-./run_bats.sh -v test/test_example.bats
+./test/run_bats.sh -v test/test_example.bats
 
 # Compare frameworks
-./run_bats.sh --compare-frameworks
+./test/run_bats.sh --compare-frameworks
 
 # Get migration help
-./run_bats.sh --migrate-help
+./test/run_bats.sh --migrate-help
 ```
 
 ### Next Steps for Complete Migration
@@ -110,7 +110,7 @@ fi
 ### Files Created
 
 - `test/test_example.bats` - Working example with 5 tests
-- `run_bats.sh` - Test runner script
+- `test/run_bats.sh` - Test runner script
 - `docs/BATS_MIGRATION_GUIDE.md` - Comprehensive migration documentation
 - `test/bats/` - Bats-core framework
 - `test/bats-support/` - Helper functions

@@ -4,7 +4,7 @@
 # Provides convenient commands for running bats tests
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BATS_CMD="$SCRIPT_DIR/test/bats/bin/bats"
+BATS_CMD="$SCRIPT_DIR/bats/bin/bats"
 
 # Colors for output
 RED='\033[0;31m'
