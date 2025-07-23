@@ -14,7 +14,22 @@ setup() {
     mkdir -p "$TEST_DIR"
     
     # Make gdst.sh executable and available
-    export GDST_SCRIPT="/mnt/c/dev/2025/gdst/gdst.sh"
+    # Use the current working directory approach
+    if [[ -f "./gdst.sh" ]]; then
+        export GDST_SCRIPT="$(pwd)/gdst.sh"
+    elif [[ -f "../gdst.sh" ]]; then
+        export GDST_SCRIPT="$(cd .. && pwd)/gdst.sh"
+    else
+        # Fallback: search for the script
+        export GDST_SCRIPT="$(find "$(pwd)" -name "gdst.sh" -type f | head -1)"
+    fi
+    
+    # Verify the script exists before trying to make it executable
+    if [[ ! -f "$GDST_SCRIPT" ]]; then
+        echo "Error: Could not find gdst.sh. PWD: $(pwd), Script: $GDST_SCRIPT" >&2
+        ls -la >&2
+        exit 1
+    fi
     chmod +x "$GDST_SCRIPT"
 }
 
