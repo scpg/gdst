@@ -75,7 +75,7 @@ jobs:
       run: ./test/run_bats.sh -e  # Run only essential tests first
       
     - name: Run basic functionality tests
-      run: ./test/run_tests.sh --basic  # Assuming you have a basic test subset
+      run: ./test/run_tests.sh basic  # Run basic test subset
       
     - name: Test dry-run functionality
       run: ./gdst.sh --dry-run -n test-ci -u ci-user -t node
