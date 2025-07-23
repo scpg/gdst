@@ -72,7 +72,15 @@ jobs:
         git clone --depth 1 https://github.com/bats-core/bats-assert.git test/bats-assert
         
     - name: Run core bats tests
-      run: ./test/run_bats.sh -e  # Run only essential tests first
+      run: |
+        echo "=== BATS TEST ENVIRONMENT DEBUG ==="
+        echo "Current directory: $(pwd)"
+        echo "Available files:"
+        ls -la
+        echo "GDST script exists: $(test -f gdst.sh && echo 'YES' || echo 'NO')"
+        echo "Running bats tests..."
+        echo "================================="
+        ./test/run_bats.sh -e  # Run essential tests (verbose debugging is in the test file itself)
       
     - name: Run basic functionality tests
       run: ./test/run_tests.sh basic  # Run basic test subset
