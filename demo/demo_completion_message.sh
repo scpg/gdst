@@ -6,7 +6,7 @@
 
 SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
-source "${PARENT_DIR}/constants.sh"
+source "${PARENT_DIR}/lib/constants.sh"
 
 # Demo configuration - customize these values for your demo
 SEED="$(printf "%04d" $((RANDOM % 10000)))"

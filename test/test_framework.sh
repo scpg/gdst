@@ -14,7 +14,7 @@ TEST_TEMP_DIR="${TEST_TEMP_DIR:-/tmp/gdst-test-temp}"
 GDST_SCRIPT_DIR="${GDST_SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
 # Source color definitions from constants.sh
-source "$GDST_SCRIPT_DIR/constants.sh"
+source "$GDST_SCRIPT_DIR/lib/constants.sh"
 
 # Test counters
 TESTS_TOTAL=0

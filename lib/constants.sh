@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 SCRIPT_FIX_NAME="${SCRIPT_FIX_NAME:-$(basename "$0")}"
 
 # Test directory

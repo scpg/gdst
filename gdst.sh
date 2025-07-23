@@ -10,10 +10,10 @@ set -e
 SCRIPT_FIX_NAME="gdst"
 SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 
-source "${SCRIPT_DIR}/constants.sh"
-source "${SCRIPT_DIR}/logging_lib.sh"
+source "${SCRIPT_DIR}/lib/constants.sh"
+source "${SCRIPT_DIR}/lib/logging_lib.sh"
 # Source template utilities
-source "${SCRIPT_DIR}/template_utils.sh"
+source "${SCRIPT_DIR}/lib/template_utils.sh"
 
 
 # Configuration

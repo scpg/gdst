@@ -4,7 +4,7 @@
 # This file contains helper functions for processing template files
 
 # Get the directory where this script is located
-SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
 TEMPLATES_DIR="$SCRIPT_DIR/templates"
 

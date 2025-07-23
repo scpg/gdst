@@ -27,6 +27,7 @@ jobs:
     - name: Make scripts executable
       run: |
         chmod +x gdst.sh
+        chmod +x lib/*.sh
         chmod +x test/*.sh
         
     - name: Install bats testing framework
@@ -96,7 +97,7 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Make scripts executable
-      run: chmod +x gdst.sh test/*.sh
+      run: chmod +x gdst.sh lib/*.sh test/*.sh
       
     - name: Run security tests
       run: ./test/run_tests.sh security
@@ -106,6 +107,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y shellcheck
         shellcheck gdst.sh
+        find . -name "*.sh" -path "./lib/*" -exec shellcheck {} \;
         find . -name "*.sh" -path "./test/*" -exec shellcheck {} \;
         
   performance-test:
@@ -117,7 +119,7 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Make scripts executable
-      run: chmod +x gdst.sh test/*.sh
+      run: chmod +x gdst.sh lib/*.sh test/*.sh
       
     - name: Run performance tests
       run: ./test/run_tests.sh --performance

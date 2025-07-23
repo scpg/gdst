@@ -11,8 +11,8 @@ if [[ "$SCRIPT_DIR" == */test ]]; then
 fi
 
 
-source "${SCRIPT_DIR}/constants.sh"
-source "${SCRIPT_DIR}/logging_lib.sh"
+source "${SCRIPT_DIR}/lib/constants.sh"
+source "${SCRIPT_DIR}/lib/logging_lib.sh"
 
 
 # Enable terminal logging for testing
