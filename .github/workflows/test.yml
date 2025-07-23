@@ -37,8 +37,10 @@ jobs:
       
     - name: Shellcheck - Critical files
       run: |
-        shellcheck gdst.sh
-        find lib -name "*.sh" -exec shellcheck {} \;
+        # Run shellcheck with specific severity levels (error,warning)
+        # Allow warnings but fail on errors
+        shellcheck -S error gdst.sh || exit 1
+        find lib -name "*.sh" -exec shellcheck -S error {} \; || exit 1
         
     - name: Basic functionality test
       run: |

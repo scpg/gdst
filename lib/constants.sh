@@ -8,16 +8,16 @@ TEST_DIR="${TEST_DIR:-$SCRIPT_DIR/test}"
 # Demo directory
 DEMO_DIR="${DEMO_DIR:-$SCRIPT_DIR/demo}"
 
-# Colors
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-MAGENTA='\033[0;35m'
-CYAN='\033[0;36m'
-WHITE='\033[1;37m'
-BOLD='\033[1m'
-NC='\033[0m' # No Color
+# Colors (exported for use in other scripts)
+export RED='\033[0;31m'
+export YELLOW='\033[1;33m'
+export GREEN='\033[0;32m'
+export BLUE='\033[0;34m'
+export MAGENTA='\033[0;35m'
+export CYAN='\033[0;36m'
+export WHITE='\033[1;37m'
+export BOLD='\033[1m'
+export NC='\033[0m' # No Color
 
 
 
