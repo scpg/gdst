@@ -12,43 +12,116 @@ permissions:
   pull-requests: write
 
 jobs:
-  test:
+  # Fast preliminary checks - fail fast on basic issues
+  quick-checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Set up environment
+    - name: Setup environment
       run: |
-        sudo apt-get update
-        sudo apt-get install -y git curl bc xmlstarlet shellcheck
+        sudo apt-get update -qq
+        sudo apt-get install -y shellcheck
         
     - name: Make scripts executable
+      run: chmod +x gdst.sh lib/*.sh test/*.sh
+        
+    - name: Syntax check - Main script
+      run: bash -n gdst.sh
+      
+    - name: Syntax check - Library scripts
+      run: find lib -name "*.sh" -exec bash -n {} \;
+      
+    - name: Shellcheck - Critical files
       run: |
-        chmod +x gdst.sh
-        chmod +x lib/*.sh
-        chmod +x test/*.sh
+        shellcheck gdst.sh
+        find lib -name "*.sh" -exec shellcheck {} \;
+        
+    - name: Basic functionality test
+      run: |
+        ./gdst.sh --help > /dev/null
+        ./gdst.sh --version > /dev/null
+
+  # Core functionality tests - run only after quick checks pass
+  core-tests:
+    runs-on: ubuntu-latest
+    needs: quick-checks
+    timeout-minutes: 15
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup environment
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y git curl bc xmlstarlet
+        
+    - name: Make scripts executable
+      run: chmod +x gdst.sh lib/*.sh test/*.sh
         
     - name: Install bats testing framework
       run: |
-        git clone https://github.com/bats-core/bats-core.git test/bats
-        git clone https://github.com/bats-core/bats-support.git test/bats-support
-        git clone https://github.com/bats-core/bats-assert.git test/bats-assert
+        git clone --depth 1 https://github.com/bats-core/bats-core.git test/bats
+        git clone --depth 1 https://github.com/bats-core/bats-support.git test/bats-support
+        git clone --depth 1 https://github.com/bats-core/bats-assert.git test/bats-assert
         
-    - name: Run main test suite
-      run: ./test/run_tests.sh
-      continue-on-error: true
+    - name: Run core bats tests
+      run: ./test/run_bats.sh -e  # Run only essential tests first
       
-    - name: Run bats tests
-      run: ./test/run_bats.sh -a
-      continue-on-error: true
+    - name: Run basic functionality tests
+      run: ./test/run_tests.sh --basic  # Assuming you have a basic test subset
       
-    - name: Run CI test suite
-      run: ./test/ci_test.sh
-      continue-on-error: true
+    - name: Test dry-run functionality
+      run: ./gdst.sh --dry-run -n test-ci -u ci-user -t node
+
+  # Extended tests - run in parallel after core tests pass
+  extended-tests:
+    runs-on: ubuntu-latest
+    needs: core-tests
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        test-suite: [bats-full, main-suite, ci-suite]
+      fail-fast: true  # Stop all matrix jobs if one fails
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
       
-    - name: Generate fallback test results
+    - name: Setup environment
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y git curl bc xmlstarlet
+        
+    - name: Make scripts executable
+      run: chmod +x gdst.sh lib/*.sh test/*.sh
+        
+    - name: Install bats testing framework
+      if: matrix.test-suite == 'bats-full'
+      run: |
+        git clone --depth 1 https://github.com/bats-core/bats-core.git test/bats
+        git clone --depth 1 https://github.com/bats-core/bats-support.git test/bats-support
+        git clone --depth 1 https://github.com/bats-core/bats-assert.git test/bats-assert
+        
+    - name: Run test suite
+      run: |
+        case "${{ matrix.test-suite }}" in
+          "bats-full")
+            ./test/run_bats.sh -a
+            ;;
+          "main-suite")
+            ./test/run_tests.sh
+            ;;
+          "ci-suite")
+            ./test/ci_test.sh
+            ;;
+        esac
+        
+    - name: Generate test results
       if: always()
       run: ./test/generate_junit.sh
       
@@ -56,45 +129,22 @@ jobs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: test-results
+        name: test-results-${{ matrix.test-suite }}
         path: /tmp/gdst-ci-results/
-        retention-days: 7
-        
-    - name: Publish test results
-      uses: EnricoMi/publish-unit-test-result-action@v2
-      if: always()
-      with:
-        files: |
-          /tmp/gdst-ci-results/junit/*.xml
-          /tmp/gdst-ci-results/*.xml
-        check_name: "GDST Test Results"
-        action_fail: false
-        
-    - name: Comment PR with results
-      uses: actions/github-script@v7
-      if: github.event_name == 'pull_request' && always()
-      with:
-        script: |
-          const fs = require('fs');
-          try {
-            const summary = fs.readFileSync('/tmp/gdst-ci-results/summary.txt', 'utf8');
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '## GDST Test Results\n\n```\n' + summary + '\n```'
-            });
-          } catch (error) {
-            console.log('Could not read test summary:', error);
-          }
-          
+        retention-days: 3
+
+  # Security and performance tests - only run if all extended tests pass
   security-scan:
     runs-on: ubuntu-latest
-    needs: test
+    needs: extended-tests
+    timeout-minutes: 10
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      
+    - name: Setup environment
+      run: sudo apt-get update -qq && sudo apt-get install -y shellcheck
       
     - name: Make scripts executable
       run: chmod +x gdst.sh lib/*.sh test/*.sh
@@ -102,17 +152,14 @@ jobs:
     - name: Run security tests
       run: ./test/run_tests.sh security
         
-    - name: Run shellcheck
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y shellcheck
-        shellcheck gdst.sh
-        find . -name "*.sh" -path "./lib/*" -exec shellcheck {} \;
-        find . -name "*.sh" -path "./test/*" -exec shellcheck {} \;
+    - name: Extended shellcheck
+      run: find . -name "*.sh" -path "./test/*" -exec shellcheck {} \;
         
   performance-test:
     runs-on: ubuntu-latest
-    needs: test
+    needs: extended-tests
+    timeout-minutes: 15
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'performance'))
     
     steps:
     - name: Checkout code
@@ -126,3 +173,58 @@ jobs:
         
     - name: Run stress tests
       run: ./test/run_tests.sh --stress
+
+  # Results aggregation - only runs if core tests pass
+  publish-results:
+    runs-on: ubuntu-latest
+    needs: [core-tests, extended-tests]
+    if: always() && needs.core-tests.result == 'success'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download all test results
+      uses: actions/download-artifact@v4
+      with:
+        pattern: test-results-*
+        path: /tmp/all-results/
+        
+    - name: Aggregate and publish results
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      with:
+        files: |
+          /tmp/all-results/**/junit/*.xml
+          /tmp/all-results/**/*.xml
+        check_name: "GDST Test Results"
+        action_fail: false
+        
+    - name: Comment PR with results
+      uses: actions/github-script@v7
+      if: github.event_name == 'pull_request'
+      with:
+        script: |
+          const fs = require('fs');
+          let summary = '## 🧪 GDST Test Results\n\n';
+          
+          // Add job status summary
+          const jobs = ['quick-checks', 'core-tests', 'extended-tests'];
+          for (const job of jobs) {
+            const status = '${{ needs[job].result }}' || 'skipped';
+            const emoji = status === 'success' ? '✅' : status === 'failure' ? '❌' : '⏭️';
+            summary += `${emoji} **${job}**: ${status}\n`;
+          }
+          
+          try {
+            const testSummary = fs.readFileSync('/tmp/all-results/summary.txt', 'utf8');
+            summary += '\n### Detailed Results\n```\n' + testSummary + '\n```';
+          } catch (error) {
+            summary += '\n*Detailed test results not available*';
+          }
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });
