@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
-SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-SCRIPT_FIX_NAME="${SCRIPT_FIX_NAME:-$(basename "$0")}"
+
+# Script directories - export for use in other scripts
+export SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+export SCRIPT_FIX_NAME="${SCRIPT_FIX_NAME:-$(basename "$0")}"
 
 # Test directory
-TEST_DIR="${TEST_DIR:-$SCRIPT_DIR/test}"
+export TEST_DIR="${TEST_DIR:-$SCRIPT_DIR/test}"
 
 # Demo directory
-DEMO_DIR="${DEMO_DIR:-$SCRIPT_DIR/demo}"
+export DEMO_DIR="${DEMO_DIR:-$SCRIPT_DIR/demo}"
 
 # Colors (exported for use in other scripts)
 export RED='\033[0;31m'
@@ -18,6 +20,11 @@ export CYAN='\033[0;36m'
 export WHITE='\033[1;37m'
 export BOLD='\033[1m'
 export NC='\033[0m' # No Color
+
+# Default configuration values
+export DEFAULT_PROJECT_TYPE="node"
+export DEFAULT_BRANCH="main"
+export DEFAULT_LICENSE="MIT"
 
 
 
