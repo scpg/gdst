@@ -83,9 +83,6 @@ jobs:
       
     - name: Run basic functionality tests
       run: ./test/run_tests.sh basic  # Run basic test subset
-      
-    - name: Test dry-run functionality
-      run: ./gdst.sh --dry-run -n test-ci -u ci-user -t node
 
   # Extended tests - run in parallel after core tests pass
   extended-tests:

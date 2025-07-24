@@ -67,6 +67,10 @@ teardown() {
     git config --global user.name "Test User" 2>/dev/null || true
     git config --global user.email "test@example.com" 2>/dev/null || true
     
+    # Set CI environment variable to skip connectivity checks
+    export CI=true
+    export GITHUB_ACTIONS=true
+    
     run "$GDST_SCRIPT" --name "test-project" --username "testuser" --type "python" --directory "$TEST_DIR" --dry-run
     
     echo "Exit code: $status" >&2
@@ -76,12 +80,16 @@ teardown() {
     # Check if the script at least started and shows project info
     [[ "$output" =~ "test-project" ]]
     
-    # In CI environment, the script might exit with 1 due to missing dependencies
+    # In CI environment, the script might exit with 1 due to connectivity checks
     # but should still show the configuration and dry-run output
     if [ "$status" -ne 0 ]; then
-        echo "Script failed but checking if it's a known CI issue..." >&2
-        # If it failed, ensure it's not a critical failure (output should contain expected content)
+        echo "Script failed but checking if it shows expected content..." >&2
+        # If it failed, ensure it shows expected dry-run content
         [[ "$output" =~ "GDST" ]] || return 1
         [[ "$output" =~ "Configuration:" ]] || return 1
+        [[ "$output" =~ "Dry Run Mode: Yes" ]] || return 1
+        echo "Dry-run test passed with expected CI failure pattern" >&2
+    else
+        echo "Dry-run test passed completely" >&2
     fi
 }
