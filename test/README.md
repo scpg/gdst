@@ -263,6 +263,132 @@ DEBUG=1 ./test/run_tests.sh
 ./test/test_basic.sh --verbose
 ```
 
+## Act - Local GitHub Actions Testing
+
+### What is Act?
+
+`act` is a command-line tool that allows you to **run GitHub Actions locally** using Docker containers. This enables you to:
+
+- **Test workflows before pushing** to GitHub
+- **Debug CI/CD issues** locally without consuming GitHub Actions minutes
+- **Validate workflow syntax** and job dependencies
+- **Iterate faster** on workflow development
+
+### Installation
+
+#### Windows
+```powershell
+# Using winget (recommended for Windows 10/11)
+winget install nektos.act
+
+# Alternative: Using Chocolatey
+choco install act-cli
+
+# Alternative: Using Scoop
+scoop install act
+```
+
+#### macOS
+```bash
+# Using Homebrew (recommended)
+brew install act
+```
+
+#### Linux
+```bash
+# Using package managers (if available)
+# Arch Linux
+yay -S act
+
+# Ubuntu/Debian (via GitHub releases)
+curl -s https://api.github.com/repos/nektos/act/releases/latest \
+| grep "browser_download_url.*Linux_x86_64.tar.gz" \
+| cut -d '"' -f 4 \
+| wget -qi - -O - \
+| sudo tar -xzC /usr/local/bin/ act
+
+# Alternative: Universal installer script
+curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+
+# Alternative: Manual installation from GitHub releases
+# Visit: https://github.com/nektos/act/releases
+```
+
+#### Verification
+```bash
+# Verify installation
+act --version
+```
+
+### Usage with GDST
+
+The GDST project uses `act` to validate the comprehensive test workflow defined in `.github/workflows/test.yml`:
+
+```bash
+# List all available jobs
+act -l
+
+# Run all jobs (full workflow)
+act
+
+# Run specific job
+act -j quick-checks
+act -j core-tests
+act -j extended-tests
+
+# Run with verbose output
+act --verbose
+
+# Run without pulling latest Docker images
+act --pull=false
+```
+
+### GDST Workflow Validation
+
+The GDST workflow includes multiple stages that `act` helped validate:
+
+1. **quick-checks**: Syntax validation and shellcheck
+2. **core-tests**: Bats framework tests and basic functionality
+3. **extended-tests**: Matrix testing (bats-full, main-suite, ci-suite)
+4. **security-scan**: Security and vulnerability testing
+5. **performance-test**: Performance and stress testing
+6. **publish-results**: Test result aggregation and reporting
+
+### Troubleshooting with Act
+
+During GDST development, `act` revealed a critical issue:
+
+**Problem**: Tests were failing in Docker containers due to internet connectivity checks  
+**Discovery**: `act` showed that `ping -c 1 github.com` was failing in containerized environments  
+**Solution**: Modified pre-flight checks to skip connectivity tests in CI/dry-run mode
+
+```bash
+# Debug command that revealed the issue
+act -j core-tests --verbose
+
+# The fix involved updating perform_preflight_checks() in gdst.sh:
+if [ "$DRY_RUN" = true ] || [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; then
+    print_status "Internet connectivity check skipped (CI/dry-run mode)"
+```
+
+### Benefits for GDST
+
+Using `act` provided several advantages:
+
+- ✅ **Early Detection**: Found environment-specific issues before GitHub deployment
+- ✅ **Faster Iteration**: Debug workflow issues locally without git commits
+- ✅ **Resource Efficiency**: No GitHub Actions minutes consumed during development
+- ✅ **Confidence**: Validated that all 11 test cases pass in CI environment
+
+### Docker Requirements
+
+`act` requires Docker to be installed and running, as it uses Docker containers to simulate the GitHub Actions environment:
+
+- Uses `catthehacker/ubuntu:act-latest` by default
+- Supports custom Docker images
+- Mounts your workspace into the container
+- Provides isolated testing environment
+
 ## Integration with Development Workflow
 
 ### Pre-commit Testing

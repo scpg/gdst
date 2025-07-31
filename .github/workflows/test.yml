@@ -81,8 +81,36 @@ jobs:
         echo "================================="
         ./test/run_bats.sh -e  # Run essential tests (verbose debugging is in the test file itself)
       
+    - name: Debug environment before tests
+      run: |
+        echo "=== DEBUGGING DOCKER ENVIRONMENT ==="
+        echo "User: $(whoami)"
+        echo "Home: $HOME"
+        echo "Path: $PATH"
+        echo "Shell: $SHELL"
+        echo "Working dir: $(pwd)"
+        echo ""
+        echo "=== Testing Pre-flight Commands ==="
+        echo "1. Disk space test:"
+        df -BG "$(pwd)" || echo "df command failed"
+        available_space=$(df -BG "$(pwd)" | awk 'NR==2 {print $4}' | sed 's/G//' 2>&1) || echo "awk/sed failed"
+        echo "Available space: '$available_space'"
+        echo "2. Ping test:"
+        ping -c 1 github.com >/dev/null 2>&1 && echo "Ping: SUCCESS" || echo "Ping: FAILED"
+        echo "3. GH command test:"
+        command -v gh >/dev/null 2>&1 && echo "GH: EXISTS" || echo "GH: NOT FOUND"
+        echo ""
+        echo "=== Testing gdst.sh directly ==="
+        bash gdst.sh -n test-debug -u testuser -t node --dry-run 2>&1 | head -5 || echo "GDST failed with exit code $?"
+        echo ""
+        echo "=== Environment Variables ==="
+        env | grep -E "(USER|HOME|PATH|SHELL|GDST)" | sort || true
+        echo "================================="
+      
     - name: Run basic functionality tests
-      run: ./test/run_tests.sh basic  # Run basic test subset
+      run: |
+        export VERBOSE_MODE=true
+        ./test/run_tests.sh basic  # Run basic test subset with verbose debugging
 
   # Extended tests - run in parallel after core tests pass
   extended-tests:

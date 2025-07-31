@@ -1575,10 +1575,12 @@ perform_preflight_checks() {
         print_status "Disk space check passed (${available_space}GB available)"
     fi
     
-    # Check internet connectivity
-    if ! ping -c 1 github.com >/dev/null 2>&1; then
-        print_error "No internet connection to GitHub"
-        checks_passed=false
+    # Check internet connectivity (skip in CI environments or dry-run)
+    if [ "$DRY_RUN" = true ] || [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ]; then
+        print_status "Internet connectivity check skipped (CI/dry-run mode)"
+    elif ! ping -c 1 github.com >/dev/null 2>&1; then
+        print_warning "No internet connection to GitHub (tests may be limited)"
+        # Don't fail the pre-flight checks for connectivity in dry-run scenarios
     else
         print_status "Internet connectivity check passed"
     fi

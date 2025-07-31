@@ -234,6 +234,13 @@ run_gdst_dry_run() {
         old_errexit=false
     fi
     
+    # Debug: Show what command we're running
+    if [[ "$VERBOSE_MODE" == "true" ]]; then
+        echo "DEBUG: Running command: $GDST_SCRIPT_DIR/gdst.sh $args --dry-run"
+        echo "DEBUG: Working directory: $(pwd)"
+        echo "DEBUG: User: $(whoami)"
+    fi
+    
     # Handle empty args properly
     if [[ -z "$args" ]]; then
         "$GDST_SCRIPT_DIR/gdst.sh" --dry-run > "$temp_output" 2>&1
@@ -241,6 +248,19 @@ run_gdst_dry_run() {
         "$GDST_SCRIPT_DIR/gdst.sh" $args --dry-run > "$temp_output" 2>&1
     fi
     local exit_code=$?
+    
+    # Debug: Show exit code and first few lines of output if failed
+    if [[ "$VERBOSE_MODE" == "true" ]] || [[ $exit_code -ne 0 ]]; then
+        echo "DEBUG: Exit code: $exit_code"
+        if [[ -f "$temp_output" ]]; then
+            echo "DEBUG: First 20 lines of output:"
+            head -20 "$temp_output" | sed 's/^/DEBUG: /'
+            if [[ $exit_code -ne 0 ]]; then
+                echo "DEBUG: Last 10 lines of output:"
+                tail -10 "$temp_output" | sed 's/^/DEBUG: /'
+            fi
+        fi
+    fi
     
     # Restore previous errexit setting
     if [[ "$old_errexit" == "true" ]]; then
