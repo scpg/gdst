@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 
-# Script directories - export for use in other scripts
-export SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
-export SCRIPT_FIX_NAME="${SCRIPT_FIX_NAME:-$(basename "$0")}"
+# Script directories - export for use in other scripts (only set if not already set)
+if [[ -z "${SCRIPT_DIR}" ]]; then
+    export SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+fi
+if [[ -z "${SCRIPT_FIX_NAME}" ]]; then
+    export SCRIPT_FIX_NAME="$(basename "$0")"
+fi
 
 # Test directory
 export TEST_DIR="${TEST_DIR:-$SCRIPT_DIR/test}"

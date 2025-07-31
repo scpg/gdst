@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+# Only set SCRIPT_DIR if not already set (to avoid conflicts with parent script)
+if [[ -z "${SCRIPT_DIR}" ]]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+fi
 source "${SCRIPT_DIR}/lib/constants.sh"
 
 # Advanced Bash Logging Library

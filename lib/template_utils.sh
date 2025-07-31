@@ -3,8 +3,10 @@
 # Template utility functions for gdst.sh
 # This file contains helper functions for processing template files
 
-# Get the directory where this script is located
-SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+# Get the directory where this script is located (only if not already set)
+if [[ -z "${SCRIPT_DIR}" ]]; then
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+fi
 
 TEMPLATES_DIR="$SCRIPT_DIR/templates"
 
