@@ -10,10 +10,24 @@ set -e
 SCRIPT_FIX_NAME="gdst"
 SCRIPT_DIR="${SCRIPT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 
-source "${SCRIPT_DIR}/lib/constants.sh"
-source "${SCRIPT_DIR}/lib/logging_lib.sh"
+# Ensure we're sourcing from the correct directory (handle CI environments)
+LIB_DIR="${SCRIPT_DIR}/lib"
+if [[ ! -d "$LIB_DIR" ]]; then
+    # Try to find the lib directory relative to current working directory
+    if [[ -d "./lib" ]]; then
+        LIB_DIR="./lib"
+    elif [[ -d "../lib" ]]; then
+        LIB_DIR="../lib"
+    else
+        echo "ERROR: Cannot find lib directory. Expected at: $LIB_DIR" >&2
+        exit 1
+    fi
+fi
+
+source "${LIB_DIR}/constants.sh"
+source "${LIB_DIR}/logging_lib.sh"
 # Source template utilities
-source "${SCRIPT_DIR}/lib/template_utils.sh"
+source "${LIB_DIR}/template_utils.sh"
 
 
 # Configuration
